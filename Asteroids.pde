@@ -1,3 +1,16 @@
+/*
+* File: Assignmment_3.pde
+* Group: Group 29
+* Date: 06/05/2019
+* Course: COSC101 - Software Development Studio 1
+* Desc: Astroids game
+* Usage: Make sure to run in the processing environment and press play etc...
+*/
+
+PVector[] asteroids = new PVector[6];
+PVector[] asteroidDirection = new PVector[6];
+int ranNum = 5;
+
 
 //Array to store the asteroid objects
 ArrayList<Asteroid> Asteroids = new ArrayList<Asteroid>();
@@ -13,12 +26,21 @@ class Asteroid{
 
 void setup(){
   
-  
+  size(800, 800);
+  // Initialize the Vector arrays.
+  for (int i = 0; i < asteroids.length; i++) {
+    asteroids[i] = new PVector(random(width), random(height));
+    asteroidDirection[i] = new PVector(random(-ranNum, ranNum), random(-ranNum, ranNum));
+    
+  }  
 }
 
 
 void draw(){
   
+  background(0);  
+  edgeDetect();
+  drawAsteroids();
   
 }
 
@@ -34,4 +56,44 @@ boolean circleCollision(float xPos1, float yPos1,float radOne, float xPos2, floa
     return true;
   }
   return false;
+}
+
+/*
+* Function: edgeDetect()
+* Parameters: None
+* Returns: Void
+* Desc: Allows asteroids to wrap around the screen when they reach the edge.
+*/
+
+void edgeDetect(){
+  
+  for (int i = 0; i < asteroids.length; i++) {
+    if (asteroids[i].x > width){
+    asteroids[i].x = 0;
+    } else if (asteroids[i].x < 0){
+      asteroids[i].x = width;
+    }
+    if (asteroids[i].y > height){
+    asteroids[i].y = 0;
+    } else if (asteroids[i].y < 0){
+      asteroids[i].y = height;
+    }
+          
+    }
+  }
+  
+/*
+* Function: drawAsteroids()
+* Parameters: None
+* Returns: Void
+* Desc: Populates the screen with asteroids that have a random direction and speed.
+*/
+
+void drawAsteroids(){
+  
+  for (int i = 0; i < asteroids.length; i++) {
+    asteroids[i].add(asteroidDirection[i]);
+    ellipse(asteroids[i].x, asteroids[i].y, 48, 48);
+    
+  }
 }
