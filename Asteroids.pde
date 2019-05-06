@@ -24,8 +24,42 @@ boolean sUP=false, sDOWN=false, sRIGHT = false, sLEFT=false;
 
 
 class Asteroid{
+  //Position
+  float xPos, yPos;
+  //Radius for collision detection
+  float boundaryRadius;
+  //Size 1,2 or 3. 1 largest 3 smallest. Hit on size 1 creates two size 2, hit on size two creates 2 size 3?
+  //Link boundaryRadius to size?
+  int size;
+  //Track if hit, if so do not render.
+  boolean hit;
+  //Number of times to hit
+  int hitsToRemove;
+  int timesHit;
   
   
+  //Initialise
+  Asteroid(float xCoord, float yCoord,float collisionRadius, int asteroidSize, int toughness){
+    this.xPos = xCoord;
+    this.yPos = yCoord;
+    this.boundaryRadius = collisionRadius/2;
+    this.hit = false;
+    this.size = asteroidSize;
+    this.hitsToRemove = toughness;
+    this.timesHit = 0;
+  }
+  
+  void renderMe(){
+    //If not hit
+    if(!hit){
+     //Draw image of asteroid 
+     ellipse(xPos, yPos, boundaryRadius, boundaryRadius);
+    }
+    
+
+    
+  }
+    
 }
 
 
@@ -105,6 +139,20 @@ void edgeDetect(){
 */
 
 void drawAsteroids(){
+  
+  /*
+  for(Asteroid asteroidObj : Asteroids){
+    
+     asteroidObj.renderMe(); 
+    
+  }
+  */
+    
+  
+  
+  
+  
+  
   
   for (int i = 0; i < asteroids.length; i++) {
     asteroids[i].add(asteroidDirection[i]);
