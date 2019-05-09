@@ -16,10 +16,9 @@ int ranNum = 5;
 ArrayList<Asteroid> Asteroids = new ArrayList<Asteroid>();
 //ArrayList and class for projectiles or just use two arrays?
 
-float x1, y1, x2, y2, x3, y3, triXCenter, triYCenter, triSize; //triangle PShape variables
-PShape ship; //consider changing to image
-float speed;
-boolean sUP=false, sDOWN=false, sRIGHT = false, sLEFT=false;
+PShape spaceship;//consider changing to image
+boolean sUP, sDOWN, sRIGHT, sLEFT;//control key direction
+Ship ship;//ship object
 
 
 
@@ -73,12 +72,8 @@ void setup(){
     
   }
   
-  speed=2; //can be changed
-  triSize=5; //can be changed
-
-  //random starting coordinates
-  triXCenter=random((0+triSize), (width-triSize));
-  triYCenter=random((0+triSize), (height-triSize));  
+  ship = new Ship();
+  smooth(); 
 }
 
 
@@ -87,9 +82,9 @@ void draw(){
   background(125);//placeholder  
   edgeDetect();//Shanan's
   drawAsteroids();
-  shipEdgeCheck();//Daniel's
-  drawShip();
-  moveShip();
+  ship.updatePos();
+  ship.edgeCheck();
+  ship.display();
   
 }
 
@@ -160,52 +155,96 @@ void drawAsteroids(){
     
   }
 }
-void drawShip() {
-  //top corner
-  x1=triXCenter;
-  y1=triYCenter-triSize;
-  //bottom left corner
-  x2=triXCenter-triSize;
-  y2=triYCenter+triSize;
-  //bottom right corner
-  x3=triXCenter+triSize;
-  y3=triYCenter+triSize;
 
-  ship = createShape(TRIANGLE, x1, y1, x2, y2, x3, y3);
-  shape(ship);
+//feel free to modify this class structure or give advice.
+class Ship {
+  
+  PVector location, dir;
+  int moveSpeed;
+  float xPos, yPos,x1,y1,x2,y2,x3,y3;
+  float turnFactor;float scaleFactor;
+
+  Ship() {
+    
+    //controls speed, amount of rotation and scale of ship, feel free to change
+    moveSpeed=8;
+    turnFactor =6;
+    scaleFactor=1.5;
+    //random starting coordinates
+    xPos=random(0, width);
+    yPos=random(0, height);
+    //plan to add in acceleration, once learnt how.
+    location = new PVector(xPos, yPos);
+    dir = new PVector(0, -moveSpeed);
+  }
+  void updatePos() {
+    xPos=location.x;
+    yPos=location.y;
+
+    if (sUP) {
+      location.add(dir);
+    } 
+    if (sDOWN) {
+      location.sub(dir);
+    }
+    if (sLEFT) {
+      rotateShip(dir, radians(-turnFactor));
+    }
+    if (sRIGHT) {
+      rotateShip(dir, radians(turnFactor));
+    }
+  }
+  void display() {
+
+    //triangle coordinates with centre(0,0)
+    //coord's for + 90 degree rotation(HALF_PI)
+    //x1=-10;y1=-15;
+    //x2=-10;y2=15;
+    //x3=20;y3=0;
+
+    //same triangle, normal orientation. centre(0,0).
+    x1=0;y1=-20;
+    x2=-15;y2=10;
+    x3=15;y3=10;
+    
+    pushMatrix();
+    translate(location.x, location.y);
+    spaceship = createShape(TRIANGLE, x1, y1, x2, y2, x3, y3);
+    //spaceship.rotate(dir.heading());//for 90 degree triangle
+    // rotation for normal triangle
+    //add HALF_PI to offset translated rotation, may be a better way(unsure).
+    spaceship.rotate(dir.heading()+HALF_PI); 
+    spaceship.scale(scaleFactor);
+    shape(spaceship);
+    popMatrix();
+    fill(0); 
+    ellipse(xPos, yPos, 5, 5);//to show centre point, can be deleted
+    fill(255);
+  }
+
+  void edgeCheck() {
+    if (location.x < 0) { //left
+      location.x = width;
+    } else if (location.x > width) { //right
+      location.x = 0;
+    }
+    if (location.y < 0) { //top
+      location.y = height;
+    } else if (location.y > height) { //bottom
+      location.y = 0;
+    }
+  }
+  
+  //determines direction/heading
+  void rotateShip(PVector vector, float angle) {
+    
+    float temp = dir.x;
+    vector.x = dir.x*cos(angle) - vector.y*sin(angle);
+    vector.y = temp*sin(angle) + vector.y*cos(angle);
+  }
 }
 
-void shipEdgeCheck() {
-  //Placeholder edge detection 
-  //may need to be changed/replaced once ship is rotating or if image used instead of PShape,
-  //will act like a radius from center point which may cause some issues with 
-  //triangular shaped ship.
 
-  if (triXCenter+abs(triSize)<0) {//left side
-    triXCenter=width+triSize;
-  }else if (triXCenter-abs(triSize)>width) {//right side
-    triXCenter=0-triSize;
-  }else if (triYCenter+abs(triSize)<0) {//top side
-    triYCenter=height+triSize;
-  }else if (triYCenter-abs(triSize)>height) {//bottom side
-    triYCenter=0-triSize;
-  }
-}
-
-void moveShip() {
-  if (sUP) {
-    triYCenter-=speed;
-  }
-  if (sDOWN) {
-    triYCenter+=speed;
-  }
-  if (sRIGHT) {
-    triXCenter+=speed;
-  }
-  if (sLEFT) {
-    triXCenter-=speed;
-  }
-}
 
 void keyPressed() {
   //direction movement
