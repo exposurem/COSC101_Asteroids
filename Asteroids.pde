@@ -7,84 +7,42 @@
 * Usage: Make sure to run in the processing environment and press play etc...
 */
 
-PVector[] asteroids = new PVector[6];
-PVector[] asteroidDirection = new PVector[6];
-int ranNum = 5;
-
-
 //Array to store the asteroid objects
-ArrayList<Asteroid> Asteroids = new ArrayList<Asteroid>();
-//ArrayList and class for projectiles or just use two arrays?
-
+ArrayList<Asteroid> asteroids;
 PShape spaceship;//consider changing to image
 boolean sUP, sDOWN, sRIGHT, sLEFT;//control key direction
 Ship ship;//ship object
-
-
-
-class Asteroid{
-  //Position
-  float xPos, yPos;
-  //Radius for collision detection
-  float boundaryRadius;
-  //Size 1,2 or 3. 1 largest 3 smallest. Hit on size 1 creates two size 2, hit on size two creates 2 size 3?
-  //Link boundaryRadius to size?
-  int size;
-  //Track if hit, if so do not render.
-  boolean hit;
-  //Number of times to hit
-  int hitsToRemove;
-  int timesHit;
-  
-  
-  //Initialise
-  Asteroid(float xCoord, float yCoord,float collisionRadius, int asteroidSize, int toughness){
-    this.xPos = xCoord;
-    this.yPos = yCoord;
-    this.boundaryRadius = collisionRadius/2;
-    this.hit = false;
-    this.size = asteroidSize;
-    this.hitsToRemove = toughness;
-    this.timesHit = 0;
-  }
-  
-  void renderMe(){
-    //If not hit
-    if(!hit){
-     //Draw image of asteroid 
-     ellipse(xPos, yPos, boundaryRadius, boundaryRadius);
-    }
-    
-
-    
-  }
-    
-}
-
+// Maximum number of largest asteroids on screen... Can tie to level.
+int numberAsteroids = 5;
+// Asteroid hitpoints.
+int asteroidLife = 3;
 
 void setup(){
   
-  size(800, 800);
-  // Initialize the Vector arrays.
-  for (int i = 0; i < asteroids.length; i++) {
-    asteroids[i] = new PVector(random(width), random(height));
-    asteroidDirection[i] = new PVector(random(-ranNum, ranNum), random(-ranNum, ranNum));
-    
-  }
-  
+  size(800, 800); 
   ship = new Ship();
   smooth(); 
+  // Initialize the ArrayList.
+  asteroids = new ArrayList<Asteroid>();
+  for (int i = 0; i < numberAsteroids; i++) { 
+    asteroids.add(new Asteroid(random(width), random(height), asteroidLife, random(-5, 5), random(-5, 5)));
+  }
 }
 
 
 void draw(){
   
-  background(125);//placeholder  
-  edgeDetect();//Shanan's
-  drawAsteroids();
+  background(125);//placeholder 
+  // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
+  for (int i = asteroids.size()-1; i >= 0; i--) { 
+    Asteroid asteroid = asteroids.get(i);
+    asteroid.move();
+    asteroid.drawAsteroid();
+  }
   ship.updatePos();
   ship.edgeCheck();
   ship.display();
+  
   
 }
 
@@ -100,60 +58,6 @@ boolean circleCollision(float xPos1, float yPos1,float radOne, float xPos2, floa
     return true;
   }
   return false;
-}
-
-/*
-* Function: edgeDetect()
-* Parameters: None
-* Returns: Void
-* Desc: Allows asteroids to wrap around the screen when they reach the edge.
-*/
-
-void edgeDetect(){
-  
-  for (int i = 0; i < asteroids.length; i++) {
-    if (asteroids[i].x > width){
-    asteroids[i].x = 0;
-    } else if (asteroids[i].x < 0){
-      asteroids[i].x = width;
-    }
-    if (asteroids[i].y > height){
-    asteroids[i].y = 0;
-    } else if (asteroids[i].y < 0){
-      asteroids[i].y = height;
-    }
-          
-    }
-  }
-  
-/*
-* Function: drawAsteroids()
-* Parameters: None
-* Returns: Void
-* Desc: Populates the screen with asteroids that have a random direction and speed.
-*/
-
-void drawAsteroids(){
-  
-  /*
-  for(Asteroid asteroidObj : Asteroids){
-    
-     asteroidObj.renderMe(); 
-    
-  }
-  */
-    
-  
-  
-  
-  
-  
-  
-  for (int i = 0; i < asteroids.length; i++) {
-    asteroids[i].add(asteroidDirection[i]);
-    ellipse(asteroids[i].x, asteroids[i].y, 48, 48);
-    
-  }
 }
 
 //feel free to modify this class structure or give advice.
@@ -244,7 +148,80 @@ class Ship {
   }
 }
 
+class Asteroid {
+  //Position.
+  float xPos, yPos;
+  //Radius for collision detection.
+  //float boundaryRadius;
+  // Speed/direction on x axis.
+  float xSpeed;
+  // Speed/direction on y axis.
+  float ySpeed; 
+  //Number of times to hit.
+  int hitsLeft;
+  int largeAsteroid = 80;
+  int mediumAsteroid = 50;
+  int smallAsteroid = 20;
+  // Initialise.
+  Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
+    this.xPos = xPos;
+    this.yPos = yPos;
+    this.xSpeed = xSpeed;
+    this.ySpeed = ySpeed;
+    this.hitsLeft = hitsLeft;
+  }
 
+  // Draw each Asteroid to the screen at the appropriate size.
+  void drawAsteroid() {
+    if (hitsLeft == 3) {
+      ellipse(xPos, yPos, largeAsteroid, largeAsteroid);
+    } else if (hitsLeft == 2) {
+      ellipse(xPos, yPos, mediumAsteroid, mediumAsteroid);
+    } else if (hitsLeft == 1) {
+      ellipse(xPos, yPos, smallAsteroid, smallAsteroid);
+    }
+  }
+
+  // Handles asteroid movement and boundary checking.
+  void move() {
+    xPos += xSpeed;
+    yPos += ySpeed;
+    if (xPos > width) {
+      xPos = 0;
+    } else if (xPos < 0) {
+      xPos = width;
+    }
+    if (yPos > height) {
+      yPos = 0;
+    } else if (yPos < 0) {
+      yPos = height;
+    }
+  }
+
+  // Returns x coordinate of Asteroid.
+  float xPos() {
+
+    return(xPos);
+  }
+
+  // Returns y coordinate of Asteroid.
+  float yPos() {
+
+    return(yPos);
+  }
+
+  // Subtracts a point from the asteroids life.
+  void hitsLeft() {
+
+    hitsLeft--;
+  }
+
+  // returns current number of hits asteroid can sustain.
+  int hits() {
+
+    return hitsLeft;
+  }
+}
 
 void keyPressed() {
   //direction movement
@@ -274,5 +251,21 @@ void keyReleased() {
   }
   if (key=='a') {
     sLEFT=false;
+  }
+}
+
+// Using mousePressed for now to simulate a collision.
+// TODO - Merge with ship and bullet collision when completed.
+void mousePressed() {
+  for (int i = asteroids.size()-1; i >= 0; i--) { 
+    Asteroid asteroid = asteroids.get(i);  
+    // Asteroids will split when mouse is hovered directly over and clicked.
+    if (circleCollision(mouseX, mouseY, 15, asteroid.xPos(), asteroid.yPos(), 25)) {
+      asteroid.hitsLeft();
+      // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
+      asteroids.remove(i);
+      asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+      asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+    }
   }
 }
