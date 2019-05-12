@@ -9,8 +9,9 @@
 
 //Array to store the asteroid objects
 ArrayList<Asteroid> asteroids;
+ArrayList<Projectile> projectiles;
 PShape spaceship;//consider changing to image
-boolean sUP, sDOWN, sRIGHT, sLEFT;//control key direction
+boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
 Ship ship;//ship object
 // Maximum number of largest asteroids on screen... Can tie to level.
 int numberAsteroids = 5;
@@ -27,6 +28,8 @@ void setup(){
   for (int i = 0; i < numberAsteroids; i++) { 
     asteroids.add(new Asteroid(random(width), random(height), asteroidLife, random(-5, 5), random(-5, 5)));
   }
+  
+  projectiles = new ArrayList<Projectile>();
 }
 
 
@@ -34,6 +37,7 @@ void draw(){
   
   background(125);//placeholder 
   // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
+  detectCollisions();
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);
     asteroid.move();
@@ -42,9 +46,44 @@ void draw(){
   ship.updatePos();
   ship.edgeCheck();
   ship.display();
-  
+  updateAndDrawProjectiles();
   
 }
+
+//Removes bullets once they hit something, or are off the screen then renders and updates the location of the remainning bullets.
+void updateAndDrawProjectiles(){
+
+  for (int i = projectiles.size()-1; i >= 0; i--) { 
+  Projectile bullets = projectiles.get(i);  
+
+  if (!bullets.visible || bullets.location.x >= width  || bullets.location.x <= 0 || bullets.location.y >= height || bullets.location.y <=0 ) {
+
+    // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
+    projectiles.remove(i);
+  }
+  else{
+    bullets.move();
+    bullets.display();
+    
+    
+    }
+  }
+  
+}
+//to do
+void gameOverScreen(){
+  
+}
+
+void resetGame(){
+  
+  //Game Complete, next level
+  
+  //Game ended, level 1.
+  
+}
+
+
 
 /*
 Function Purpose: To detect collisions between two objects using circle collision detection.
@@ -63,9 +102,9 @@ boolean circleCollision(float xPos1, float yPos1,float radOne, float xPos2, floa
 //feel free to modify this class structure or give advice.
 class Ship {
   
-  PVector location, dir;
+  PVector location, dir, noseLocation;
   int moveSpeed;
-  float xPos, yPos,x1,y1,x2,y2,x3,y3;
+  float xPos, yPos,x1,y1,x2,y2,x3,y3,yNoseOffset,radius;
   float turnFactor;float scaleFactor;
 
   Ship() {
@@ -74,11 +113,19 @@ class Ship {
     moveSpeed=8;
     turnFactor =6;
     scaleFactor=1.5;
+    //same triangle, normal orientation. centre(0,0).
+    x1=0;y1=-20;
+    x2=-15;y2=10;
+    x3=15;y3=10;
+    //Collision detection radius.
+    radius = (abs(x2) + abs(x3)) /2;
+    yNoseOffset = -27;
     //random starting coordinates
     xPos=random(0, width);
     yPos=random(0, height);
     //plan to add in acceleration, once learnt how.
     location = new PVector(xPos, yPos);
+    noseLocation = new PVector(location.x,location.y-yNoseOffset);
     dir = new PVector(0, -moveSpeed);
   }
   void updatePos() {
@@ -87,16 +134,25 @@ class Ship {
 
     if (sUP) {
       location.add(dir);
+      noseLocation.add(dir);
     } 
     if (sDOWN) {
       location.sub(dir);
+      noseLocation.sub(dir);
     }
     if (sLEFT) {
       rotateShip(dir, radians(-turnFactor));
+      noseLocation.add(dir);
     }
     if (sRIGHT) {
       rotateShip(dir, radians(turnFactor));
+      noseLocation.sub(dir);
     }
+    if (sSHOOT){
+      shoot();
+       
+    }
+    //println(noseLocation.x);
   }
   void display() {
 
@@ -106,10 +162,7 @@ class Ship {
     //x2=-10;y2=15;
     //x3=20;y3=0;
 
-    //same triangle, normal orientation. centre(0,0).
-    x1=0;y1=-20;
-    x2=-15;y2=10;
-    x3=15;y3=10;
+
     
     pushMatrix();
     translate(location.x, location.y);
@@ -145,7 +198,16 @@ class Ship {
     float temp = dir.x;
     vector.x = dir.x*cos(angle) - vector.y*sin(angle);
     vector.y = temp*sin(angle) + vector.y*cos(angle);
+ //<>// //<>//
   }
+  
+  void shoot(){
+    
+    //println(projectiles.size()); - Fault finding to check the arraylist for bullets reduces. Performance issue currently happens
+    projectiles.add(new Projectile(dir,noseLocation,moveSpeed));
+    
+  }
+  
 }
 
 class Asteroid {
@@ -158,6 +220,7 @@ class Asteroid {
   // Speed/direction on y axis.
   float ySpeed; 
   //Number of times to hit.
+  float radius = 25;
   int hitsLeft;
   int largeAsteroid = 80;
   int mediumAsteroid = 50;
@@ -223,6 +286,35 @@ class Asteroid {
   }
 }
 
+
+//Change hardcoded radius, solve and clean up class once issue it fixed.
+class Projectile{
+  PVector location = new PVector(),direction = new PVector();
+  float speed;
+  boolean visible;
+  float radius;
+  
+  Projectile(PVector shipDirection, PVector noseLocation, float spd){
+    this.speed = spd;
+    this.visible = true;
+    this.location = location.set(noseLocation.x,noseLocation.y);
+    this.direction = direction.set(shipDirection.x,shipDirection.y);
+    this.radius = 5;
+  }
+  
+  
+  //Update position of projectile
+  void move(){
+    location.add(direction); 
+  }
+  
+  void display(){
+    ellipse(location.x, location.y, 5, 5);
+
+  }
+  
+}
+
 void keyPressed() {
   //direction movement
   if (key== 'w') {
@@ -236,6 +328,9 @@ void keyPressed() {
   }
   if (key=='a') {
     sLEFT=true;
+  }
+  if (key=='l') {
+    sSHOOT=true;
   }
 }
 
@@ -252,20 +347,35 @@ void keyReleased() {
   if (key=='a') {
     sLEFT=false;
   }
+   if (key=='l') {
+    sSHOOT=false;
+  }
 }
 
 // Using mousePressed for now to simulate a collision.
 // TODO - Merge with ship and bullet collision when completed.
-void mousePressed() {
+// I think the performance issue lies within this modified function.
+void detectCollisions() {
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);  
     // Asteroids will split when mouse is hovered directly over and clicked.
-    if (circleCollision(mouseX, mouseY, 15, asteroid.xPos(), asteroid.yPos(), 25)) {
+    // Check to see if the player's ship is hit first - game over
+    if (circleCollision(ship.xPos,ship.yPos,ship.radius,asteroid.xPos(), asteroid.yPos(), asteroid.radius)){
+      //println("Game over");
+    }
+    for(Projectile bullets : projectiles){
+      if (circleCollision(bullets.location.x, bullets.location.y, bullets.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
       asteroid.hitsLeft();
       // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
       asteroids.remove(i);
       asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
       asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+      bullets.visible = false;
     }
+      
+      
+      
+    }
+    
   }
 }
