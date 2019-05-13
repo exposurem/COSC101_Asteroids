@@ -37,12 +37,13 @@ void draw(){
   
   background(125);//placeholder 
   // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
-  detectCollisions();
+
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);
     asteroid.move();
     asteroid.drawAsteroid();
   }
+  detectCollisions();
   ship.updatePos();
   ship.edgeCheck();
   ship.display();
@@ -56,7 +57,7 @@ void updateAndDrawProjectiles(){
   for (int i = projectiles.size()-1; i >= 0; i--) { 
   Projectile bullets = projectiles.get(i);  
 
-  if (!bullets.visible || bullets.location.x >= width  || bullets.location.x <= 0 || bullets.location.y >= height || bullets.location.y <=0 ) {
+  if (!bullets.visible || bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 ) {
 
     // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
     projectiles.remove(i);
@@ -149,6 +150,7 @@ class Ship {
       noseLocation.sub(dir);
     }
     if (sSHOOT){
+      println(projectiles.size());
       shoot();
        
     }
@@ -204,7 +206,7 @@ class Ship {
   void shoot(){
     
     //println(projectiles.size()); - Fault finding to check the arraylist for bullets reduces. Performance issue currently happens
-    projectiles.add(new Projectile(dir,noseLocation,moveSpeed));
+    projectiles.add(new Projectile(dir,location,moveSpeed));
     
   }
   
@@ -289,15 +291,15 @@ class Asteroid {
 
 //Change hardcoded radius, solve and clean up class once issue it fixed.
 class Projectile{
-  PVector location = new PVector(),direction = new PVector();
+  PVector blocation = new PVector(),direction = new PVector();
   float speed;
   boolean visible;
   float radius;
   
-  Projectile(PVector shipDirection, PVector noseLocation, float spd){
+  Projectile(PVector shipDirection, PVector shipLocation, float spd){
     this.speed = spd;
     this.visible = true;
-    this.location = location.set(noseLocation.x,noseLocation.y);
+    this.blocation = blocation.set(shipLocation.x,shipLocation.y);
     this.direction = direction.set(shipDirection.x,shipDirection.y);
     this.radius = 5;
   }
@@ -305,12 +307,13 @@ class Projectile{
   
   //Update position of projectile
   void move(){
-    location.add(direction); 
+    blocation.add(direction); 
   }
   
   void display(){
-    ellipse(location.x, location.y, 5, 5);
-
+  //Draw bullet.
+  ellipse(blocation.x, blocation.y, 5, 5);
+    
   }
   
 }
@@ -363,18 +366,23 @@ void detectCollisions() {
     if (circleCollision(ship.xPos,ship.yPos,ship.radius,asteroid.xPos(), asteroid.yPos(), asteroid.radius)){
       //println("Game over");
     }
-    for(Projectile bullets : projectiles){
-      if (circleCollision(bullets.location.x, bullets.location.y, bullets.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
-      asteroid.hitsLeft();
-      // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
-      asteroids.remove(i);
-      asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
-      asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
-      bullets.visible = false;
-    }
-      
-      
-      
+    
+    for(int j=0; j< projectiles.size();j++){
+      Projectile bullet = projectiles.get(j);
+      if(!bullet.visible){
+         continue; 
+      }
+      else{
+        if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
+        asteroid.hitsLeft();
+        // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
+        asteroids.remove(i);
+        asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+        asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+        bullet.visible = false;
+        }
+      }
+
     }
     
   }
