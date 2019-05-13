@@ -51,39 +51,35 @@ void draw(){
   
 }
 
-//Removes bullets once they hit something, or are off the screen then renders and updates the location of the remainning bullets.
+
+//TO BE MODIFIED ONCE EDGE OF MAP DETECTION FUNCTION IS REFACTORED.
+/*
+Function Purpose: To remove projectiles from the array if they go beyond the bounds of the screen.
+Called from: **
+Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+*/
 void updateAndDrawProjectiles(){
 
   for (int i = projectiles.size()-1; i >= 0; i--) { 
   Projectile bullets = projectiles.get(i);  
 
-  if (!bullets.visible || bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 ) {
-
-    // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
+  if (bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 ) {
+    println("-----");
+    println("---In if--");
+    println(bullets.visible);
+    println(bullets.blocation.x);
+    println(bullets.blocation.y);
+    println("----------------");
     projectiles.remove(i);
   }
   else{
     bullets.move();
     bullets.display();
-    
-    
+   
     }
   }
   
 }
-//to do
-void gameOverScreen(){
-  
-}
-
-void resetGame(){
-  
-  //Game Complete, next level
-  
-  //Game ended, level 1.
-  
-}
-
 
 
 /*
@@ -150,8 +146,8 @@ class Ship {
       noseLocation.sub(dir);
     }
     if (sSHOOT){
-      println(projectiles.size());
       shoot();
+      sSHOOT = false;
        
     }
     //println(noseLocation.x);
@@ -202,10 +198,9 @@ class Ship {
     vector.y = temp*sin(angle) + vector.y*cos(angle);
  //<>// //<>//
   }
-  
+  //Adds a new projectile
   void shoot(){
     
-    //println(projectiles.size()); - Fault finding to check the arraylist for bullets reduces. Performance issue currently happens
     projectiles.add(new Projectile(dir,location,moveSpeed));
     
   }
@@ -355,31 +350,29 @@ void keyReleased() {
   }
 }
 
-// Using mousePressed for now to simulate a collision.
-// TODO - Merge with ship and bullet collision when completed.
-// I think the performance issue lies within this modified function.
+//Detect collisions between Ship + Asteroids and asteroids + bullets.
 void detectCollisions() {
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);  
-    // Asteroids will split when mouse is hovered directly over and clicked.
     // Check to see if the player's ship is hit first - game over
     if (circleCollision(ship.xPos,ship.yPos,ship.radius,asteroid.xPos(), asteroid.yPos(), asteroid.radius)){
       //println("Game over");
     }
     
-    for(int j=0; j< projectiles.size();j++){
+    for(int j=projectiles.size()-1; j >= 0;j--){
       Projectile bullet = projectiles.get(j);
       if(!bullet.visible){
          continue; 
       }
       else{
         if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
+        projectiles.remove(j);
         asteroid.hitsLeft();
         // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
         asteroids.remove(i);
         asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
         asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
-        bullet.visible = false;
+
         }
       }
 
