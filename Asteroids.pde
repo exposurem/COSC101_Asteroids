@@ -196,7 +196,7 @@ class Ship {
     float temp = dir.x;
     vector.x = dir.x*cos(angle) - vector.y*sin(angle);
     vector.y = temp*sin(angle) + vector.y*cos(angle);
- //<>// //<>//
+ //<>//
   }
   //Adds a new projectile
   void shoot(){
@@ -327,9 +327,6 @@ void keyPressed() {
   if (key=='a') {
     sLEFT=true;
   }
-  if (key=='l') {
-    sSHOOT=true;
-  }
 }
 
 void keyReleased() {
@@ -346,7 +343,7 @@ void keyReleased() {
     sLEFT=false;
   }
    if (key=='l') {
-    sSHOOT=false;
+    sSHOOT=true;
   }
 }
 
