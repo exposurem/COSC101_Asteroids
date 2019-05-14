@@ -17,9 +17,11 @@ Ship ship;//ship object
 int numberAsteroids = 5;
 // Asteroid hitpoints.
 int asteroidLife = 3;
+//configuration setting tied to frames
+float bulletMaxDistance = 80;
 
 void setup(){
-  
+  frameRate(60);
   size(800, 800); 
   ship = new Ship();
   smooth(); 
@@ -63,13 +65,7 @@ void updateAndDrawProjectiles(){
   for (int i = projectiles.size()-1; i >= 0; i--) { 
   Projectile bullets = projectiles.get(i);  
 
-  if (bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 ) {
-    println("-----");
-    println("---In if--");
-    println(bullets.visible);
-    println(bullets.blocation.x);
-    println(bullets.blocation.y);
-    println("----------------");
+  if (bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 || bullets.distanceTravelled >= bulletMaxDistance) {
     projectiles.remove(i);
   }
   else{
@@ -201,7 +197,7 @@ class Ship {
   //Adds a new projectile
   void shoot(){
     
-    projectiles.add(new Projectile(dir,location,moveSpeed));
+    projectiles.add(new Projectile(dir,location,moveSpeed, bulletMaxDistance));
     
   }
   
@@ -287,21 +283,25 @@ class Asteroid {
 //Change hardcoded radius, solve and clean up class once issue it fixed.
 class Projectile{
   PVector blocation = new PVector(),direction = new PVector();
-  float speed;
+  float speed,distanceTravelled,maxDistance;
   boolean visible;
   float radius;
   
-  Projectile(PVector shipDirection, PVector shipLocation, float spd){
+  Projectile(PVector shipDirection, PVector shipLocation, float spd, float maxDistance){
     this.speed = spd;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x,shipLocation.y);
     this.direction = direction.set(shipDirection.x,shipDirection.y);
     this.radius = 5;
+    this.maxDistance = maxDistance;
+    this.distanceTravelled = 0;
   }
   
   
   //Update position of projectile
   void move(){
+    distanceTravelled += 1;
+    println(distanceTravelled);
     blocation.add(direction); 
   }
   
