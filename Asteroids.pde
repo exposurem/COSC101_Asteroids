@@ -367,8 +367,10 @@ void detectCollisions() {
         asteroid.hitsLeft();
         // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
         asteroids.remove(i);
-        asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
-        asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+        if(asteroid.hits() >0){
+          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
+        }
 
         }
       }
