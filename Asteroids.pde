@@ -95,42 +95,59 @@ boolean circleCollision(float xPos1, float yPos1,float radOne, float xPos2, floa
 //feel free to modify this class structure or give advice.
 class Ship {
   
-  PVector location, dir, noseLocation;
-  int moveSpeed;
-  float xPos, yPos,x1,y1,x2,y2,x3,y3,yNoseOffset,radius;
-  float turnFactor;float scaleFactor;
+  PVector location, dir, noseLocation,acceleration,velocity;
+  int bulletSpeed; //changed from moveSpeed
+  float xPos, yPos,x1,y1,x2,y2,x3,y3,yNoseOffset,radius,shipRad;
+  float turnFactor;float topSpeed;
+  float resistance,mass,thrustFactor;
+  float heading;
 
   Ship() {
     
     //controls speed, amount of rotation and scale of ship, feel free to change
-    moveSpeed=8;
-    turnFactor =6;
-    scaleFactor=1.5;
-    //same triangle, normal orientation. centre(0,0).
-    x1=0;y1=-20;
-    x2=-15;y2=10;
-    x3=15;y3=10;
+    bulletSpeed=100;//might be worth moving to bullet class, no longer used on ship.
+    resistance=0.995;//lower = resistance
+    mass = 1;
+    turnFactor =6;//turning tightness
+    topSpeed = 8;
+    shipRad =30;//size of ship
+    thrustFactor=0.15;//propelling
+    
+    
+    
+    //might have to update radius, ship no longer based on equilateral triangle.
     //Collision detection radius.
     radius = (abs(x2) + abs(x3)) /2;
     yNoseOffset = -27;
     //random starting coordinates
-    xPos=random(0, width);
-    yPos=random(0, height);
-    //plan to add in acceleration, once learnt how.
+    xPos=random(shipRad, width-shipRad);
+    yPos=random(0, height-(shipRad*2));
+    
+    acceleration = new PVector(0, 0);
+    velocity = new PVector(0, 0);
     location = new PVector(xPos, yPos);
     noseLocation = new PVector(location.x,location.y-yNoseOffset);
-    dir = new PVector(0, -moveSpeed);
+    dir = new PVector(0, -1);
   }
   void updatePos() {
     xPos=location.x;
     yPos=location.y;
-
+    
+    heading = dir.heading();
+    velocity.add(acceleration);
+    velocity.mult(resistance);
+    velocity.limit(topSpeed);
+    location.add(velocity);
+    acceleration.mult(0);//reset acceleration
+ 
     if (sUP) {
-      location.add(dir);
+      propel();
+      //location.add(dir);
       noseLocation.add(dir);
     } 
     if (sDOWN) {
-      location.sub(dir);
+      propel();
+      //location.sub(dir);
       noseLocation.sub(dir);
     }
     if (sLEFT) {
@@ -141,48 +158,59 @@ class Ship {
       rotateShip(dir, radians(turnFactor));
       noseLocation.sub(dir);
     }
-    if (sSHOOT){
+    if (sSHOOT) {
       shoot();
       sSHOOT = false;
-       
     }
     //println(noseLocation.x);
   }
+  //newton's law: acceleration = force/mass
+  void applyForce(PVector force) {
+    PVector temp = force.copy();
+    //PVector temp =dir.copy(); //add's force to turn, but without resistance at the moment.
+    force.div(mass);
+    acceleration.add(temp);
+  }
+  void propel(){
+    PVector force = new PVector(cos(heading), sin(heading));
+    if (sUP){
+      force.mult(thrustFactor);
+    }
+    if (sDOWN){
+      force.mult(-thrustFactor);  
+    }
+    applyForce(force);
+    
+  }
   void display() {
 
-    //triangle coordinates with centre(0,0)
-    //coord's for + 90 degree rotation(HALF_PI)
-    //x1=-10;y1=-15;
-    //x2=-10;y2=15;
-    //x3=20;y3=0;
-
-
-    
     pushMatrix();
-    translate(location.x, location.y);
-    spaceship = createShape(TRIANGLE, x1, y1, x2, y2, x3, y3);
-    //spaceship.rotate(dir.heading());//for 90 degree triangle
-    // rotation for normal triangle
-    //add HALF_PI to offset translated rotation, may be a better way(unsure).
-    spaceship.rotate(dir.heading()+HALF_PI); 
-    spaceship.scale(scaleFactor);
-    shape(spaceship);
+    translate(location.x,location.y+shipRad);
+    rotate(heading-HALF_PI);
+    fill(175);
+    beginShape();
+    vertex(0,shipRad);//top
+    vertex(shipRad,-shipRad);//bottom left
+    vertex(0,-shipRad/2.0);//bottom middle
+    vertex(-shipRad,-shipRad);//bottom right
+    endShape(CLOSE);
     popMatrix();
-    fill(0); 
-    ellipse(xPos, yPos, 5, 5);//to show centre point, can be deleted
     fill(255);
+    
+    ellipse(location.x,location.y,5,5);//tip distance
+    ellipse(location.x,location.y+shipRad,5,5);//center
   }
 
   void edgeCheck() {
-    if (location.x < 0) { //left
-      location.x = width;
-    } else if (location.x > width) { //right
-      location.x = 0;
+    if (location.x < -shipRad) { //left
+      location.x = width+shipRad;
+    } else if (location.x > width+shipRad) { //right
+      location.x = -shipRad;
     }
-    if (location.y < 0) { //top
+    if (location.y <= -shipRad*2) { //top
       location.y = height;
     } else if (location.y > height) { //bottom
-      location.y = 0;
+      location.y = -shipRad*2;
     }
   }
   
@@ -197,7 +225,7 @@ class Ship {
   //Adds a new projectile
   void shoot(){
     
-    projectiles.add(new Projectile(dir,location,moveSpeed, bulletMaxDistance));
+    projectiles.add(new Projectile(dir,location,bulletSpeed, bulletMaxDistance));
     
   }
   
@@ -290,7 +318,7 @@ class Projectile{
   Projectile(PVector shipDirection, PVector shipLocation, float spd, float maxDistance){
     this.speed = spd;
     this.visible = true;
-    this.blocation = blocation.set(shipLocation.x,shipLocation.y);
+    this.blocation = blocation.set(shipLocation.x,shipLocation.y+ship.shipRad); //added shipRad to Y, as shipLocation.y had been changed to tip
     this.direction = direction.set(shipDirection.x,shipDirection.y);
     this.radius = 5;
     this.maxDistance = maxDistance;
@@ -315,34 +343,34 @@ class Projectile{
 
 void keyPressed() {
   //direction movement
-  if (key== 'w') {
+  if (key== 'w'|| keyCode==UP) {
     sUP=true;
   }
-  if (key=='s') {
+  if (key=='s' || keyCode==DOWN) {
     sDOWN=true;
   }
-  if (key=='d') {
+  if (key=='d' || keyCode==RIGHT) {
     sRIGHT=true;
   }
-  if (key=='a') {
+  if (key=='a'|| keyCode==LEFT) {
     sLEFT=true;
   }
 }
 
 void keyReleased() {
-  if (key== 'w') {
+  if (key== 'w'||keyCode==UP) {
     sUP=false;
   }
-  if (key=='s') {
+  if (key=='s'|| keyCode==DOWN) {
     sDOWN=false;
   }
-  if (key=='d') {
+  if (key=='d'||keyCode==RIGHT) {
     sRIGHT=false;
   }
-  if (key=='a') {
+  if (key=='a'||keyCode==LEFT) {
     sLEFT=false;
   }
-   if (key=='l') {
+   if (key=='l'||key==' ') {
     sSHOOT=true;
   }
 }
