@@ -1,15 +1,18 @@
 /*
 * File: Assignmment_3.pde
-* Group: Group 29
-* Date: 06/05/2019
-* Course: COSC101 - Software Development Studio 1
-* Desc: Astroids game
-* Usage: Make sure to run in the processing environment and press play etc...
-*/
+ * Group: Group 29
+ * Date: 06/05/2019
+ * Course: COSC101 - Software Development Studio 1
+ * Desc: Astroids game
+ * Usage: Make sure to run in the processing environment and press play etc...
+ */
 
 //Array to store the asteroid objects
 ArrayList<Asteroid> asteroids;
 ArrayList<Projectile> projectiles;
+// Random asteroids.
+PShape randomShape;
+PShape[] shapes = new PShape[10];
 PShape spaceship;//consider changing to image
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
 Ship ship;//ship object
@@ -20,72 +23,71 @@ int asteroidLife = 3;
 //configuration setting
 float bulletMaxDistance = 500;
 
-void setup(){
+void setup() {
   frameRate(60);
   size(800, 800); 
   ship = new Ship();
   smooth(); 
+  // Generate an array of random asteroid shapes.
+  drawShapes();
+  for (int i = 0; i < shapes.length; i++) {
+    shape(shapes[i], random(width), random(height), 100, 100);
+  }
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
   for (int i = 0; i < numberAsteroids; i++) { 
-    asteroids.add(new Asteroid(random(width), random(height), asteroidLife, random(-5, 5), random(-5, 5)));
+    asteroids.add(new Asteroid(random(width), random(height), asteroidLife, random(-2, 2), random(-2, 2)));
   }
-  
+
   projectiles = new ArrayList<Projectile>();
 }
 
+void draw() {
 
-void draw(){
-  
-  background(125);//placeholder 
+  background(0);// Set to black as per the original game.
   // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
-
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);
     asteroid.move();
-    asteroid.drawAsteroid();
+    asteroid.drawAsteroid(shapes[i]);
   }
   detectCollisions();
   ship.updatePos();
   ship.edgeCheck();
   ship.display();
   updateAndDrawProjectiles();
-  
 }
 
 
 //TO BE MODIFIED ONCE EDGE OF MAP DETECTION FUNCTION IS REFACTORED.
 /*
 Function Purpose: To remove projectiles from the array if they go beyond the bounds of the screen.
-Called from: **
-Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
-*/
-void updateAndDrawProjectiles(){
+ Called from: **
+ Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+ */
+void updateAndDrawProjectiles() {
 
   for (int i = projectiles.size()-1; i >= 0; i--) { 
-  Projectile bullets = projectiles.get(i);  
+    Projectile bullets = projectiles.get(i);  
 
-  if (bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 || bullets.distanceTravelled >= bulletMaxDistance) {
-    projectiles.remove(i);
-  }
-  else{
-    bullets.move();
-    bullets.display();
-   
+    if (bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 || bullets.distanceTravelled >= bulletMaxDistance) {
+      projectiles.remove(i);
+    } else {
+      bullets.move();
+      bullets.display();
     }
   }
-  
 }
 
 
 /*
 Function Purpose: To detect collisions between two objects using circle collision detection.
-Called from: **
-Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
-*/
-boolean circleCollision(float xPos1, float yPos1,float radOne, float xPos2, float yPos2, float radTwo){
-  
-  if(dist(xPos1,yPos1,xPos2,yPos2) < radOne + radTwo){
+ Called from: **
+ Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+ */
+boolean circleCollision(float xPos1, float yPos1, float radOne, float xPos2, float yPos2, float radTwo) {
+
+  if (dist(xPos1, yPos1, xPos2, yPos2) < radOne + radTwo) {
     //There is a collision
     return true;
   }
@@ -94,16 +96,17 @@ boolean circleCollision(float xPos1, float yPos1,float radOne, float xPos2, floa
 
 //feel free to modify this class structure or give advice.
 class Ship {
-  
-  PVector location, dir, noseLocation,acceleration,velocity;
+
+  PVector location, dir, noseLocation, acceleration, velocity;
   int bulletSpeed; //changed from moveSpeed
-  float xPos, yPos,x1,y1,x2,y2,x3,y3,yNoseOffset,radius,shipRad;
-  float turnFactor;float topSpeed;
-  float resistance,mass,thrustFactor;
+  float xPos, yPos, x1, y1, x2, y2, x3, y3, yNoseOffset, radius, shipRad;
+  float turnFactor;
+  float topSpeed;
+  float resistance, mass, thrustFactor;
   float heading;
 
   Ship() {
-    
+
     //controls speed, amount of rotation and scale of ship, feel free to change
     bulletSpeed=100;//might be worth moving to bullet class, no longer used on ship.
     resistance=0.995;//lower = resistance
@@ -112,9 +115,9 @@ class Ship {
     topSpeed = 8;
     shipRad =30;//size of ship
     thrustFactor=0.15;//propelling
-    
-    
-    
+
+
+
     //might have to update radius, ship no longer based on equilateral triangle.
     //Collision detection radius.
     radius = (abs(x2) + abs(x3)) /2;
@@ -122,24 +125,24 @@ class Ship {
     //random starting coordinates
     xPos=random(shipRad, width-shipRad);
     yPos=random(0, height-(shipRad*2));
-    
+
     acceleration = new PVector(0, 0);
     velocity = new PVector(0, 0);
     location = new PVector(xPos, yPos);
-    noseLocation = new PVector(location.x,location.y-yNoseOffset);
+    noseLocation = new PVector(location.x, location.y-yNoseOffset);
     dir = new PVector(0, -1);
   }
   void updatePos() {
     xPos=location.x;
     yPos=location.y;
-    
+
     heading = dir.heading();
     velocity.add(acceleration);
     velocity.mult(resistance);
     velocity.limit(topSpeed);
     location.add(velocity);
     acceleration.mult(0);//reset acceleration
- 
+
     if (sUP) {
       propel();
       //location.add(dir);
@@ -171,34 +174,33 @@ class Ship {
     force.div(mass);
     acceleration.add(temp);
   }
-  void propel(){
+  void propel() {
     PVector force = new PVector(cos(heading), sin(heading));
-    if (sUP){
+    if (sUP) {
       force.mult(thrustFactor);
     }
-    if (sDOWN){
-      force.mult(-thrustFactor);  
+    if (sDOWN) {
+      force.mult(-thrustFactor);
     }
     applyForce(force);
-    
   }
   void display() {
 
     pushMatrix();
-    translate(location.x,location.y+shipRad);
+    translate(location.x, location.y+shipRad);
     rotate(heading-HALF_PI);
     fill(175);
     beginShape();
-    vertex(0,shipRad);//top
-    vertex(shipRad,-shipRad);//bottom left
-    vertex(0,-shipRad/2.0);//bottom middle
-    vertex(-shipRad,-shipRad);//bottom right
+    vertex(0, shipRad);//top
+    vertex(shipRad, -shipRad);//bottom left
+    vertex(0, -shipRad/2.0);//bottom middle
+    vertex(-shipRad, -shipRad);//bottom right
     endShape(CLOSE);
     popMatrix();
     fill(255);
-    
-    ellipse(location.x,location.y,5,5);//tip distance
-    ellipse(location.x,location.y+shipRad,5,5);//center
+
+    ellipse(location.x, location.y, 5, 5);//tip distance
+    ellipse(location.x, location.y+shipRad, 5, 5);//center
   }
 
   void edgeCheck() {
@@ -213,132 +215,126 @@ class Ship {
       location.y = -shipRad*2;
     }
   }
-  
+
   //determines direction/heading
   void rotateShip(PVector vector, float angle) {
-    
+
     float temp = dir.x;
     vector.x = dir.x*cos(angle) - vector.y*sin(angle);
     vector.y = temp*sin(angle) + vector.y*cos(angle);
- //<>//
   }
   //Adds a new projectile
-  void shoot(){
-    
-    projectiles.add(new Projectile(dir,location,bulletSpeed, bulletMaxDistance));
-    
+  void shoot() {
+
+    projectiles.add(new Projectile(dir, location, bulletSpeed, bulletMaxDistance));
   }
-  
 }
 
 class Asteroid {
-  //Position.
-  float xPos, yPos;
-  //Radius for collision detection.
-  //float boundaryRadius;
-  // Speed/direction on x axis.
-  float xSpeed;
-  // Speed/direction on y axis.
-  float ySpeed; 
-  //Number of times to hit.
-  float radius = 25;
-  int hitsLeft;
-  int largeAsteroid = 80;
-  int mediumAsteroid = 50;
-  int smallAsteroid = 20;
-  // Initialise.
-  Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
-    this.xPos = xPos;
-    this.yPos = yPos;
-    this.xSpeed = xSpeed;
-    this.ySpeed = ySpeed;
-    this.hitsLeft = hitsLeft;
-  }
-
-  // Draw each Asteroid to the screen at the appropriate size.
-  void drawAsteroid() {
-    if (hitsLeft == 3) {
-      ellipse(xPos, yPos, largeAsteroid, largeAsteroid);
-    } else if (hitsLeft == 2) {
-      ellipse(xPos, yPos, mediumAsteroid, mediumAsteroid);
-    } else if (hitsLeft == 1) {
-      ellipse(xPos, yPos, smallAsteroid, smallAsteroid);
+    //Position.
+    float xPos, yPos;
+    //Radius for collision detection.
+    //float boundaryRadius;
+    // Speed/direction on x axis.
+    float xSpeed;
+    // Speed/direction on y axis.
+    float ySpeed; 
+    //Number of times to hit.
+    float radius = 25;
+    int hitsLeft;
+    int largeAsteroid = 100;
+    int mediumAsteroid = 70;
+    int smallAsteroid = 40;
+    // Initialise.
+    Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
+      this.xPos = xPos;
+      this.yPos = yPos;
+      this.xSpeed = xSpeed;
+      this.ySpeed = ySpeed;
+      this.hitsLeft = hitsLeft;
     }
-  }
 
-  // Handles asteroid movement and boundary checking.
-  void move() {
-    xPos += xSpeed;
-    yPos += ySpeed;
-    if (xPos > width) {
-      xPos = 0;
-    } else if (xPos < 0) {
-      xPos = width;
+    // Draw each Asteroid to the screen at the appropriate size.
+    void drawAsteroid(PShape shapes) {
+      if (hitsLeft == 3) {
+        shape(shapes, xPos, yPos, largeAsteroid, largeAsteroid);
+      } else if (hitsLeft == 2) {
+        shape(shapes, xPos, yPos, mediumAsteroid, mediumAsteroid);
+      } else if (hitsLeft == 1) {
+        shape(shapes, xPos, yPos, smallAsteroid, smallAsteroid);
+      }
     }
-    if (yPos > height) {
-      yPos = 0;
-    } else if (yPos < 0) {
-      yPos = height;
+
+    // Handles asteroid movement and boundary checking.
+    void move() {
+      xPos += xSpeed;
+      yPos += ySpeed;
+      if (xPos > width) {
+        xPos = 0;
+      } else if (xPos < 0) {
+        xPos = width;
+      }
+      if (yPos > height) {
+        yPos = 0;
+      } else if (yPos < 0) {
+        yPos = height;
+      }
     }
-  }
 
-  // Returns x coordinate of Asteroid.
-  float xPos() {
+    // Returns x coordinate of Asteroid.
+    float xPos() {
 
-    return(xPos);
-  }
+      return(xPos);
+    }
 
-  // Returns y coordinate of Asteroid.
-  float yPos() {
+    // Returns y coordinate of Asteroid.
+    float yPos() {
 
-    return(yPos);
-  }
+      return(yPos);
+    }
 
-  // Subtracts a point from the asteroids life.
-  void hitsLeft() {
+    // Subtracts a point from the asteroids life.
+    void hitsLeft() {
 
-    hitsLeft--;
-  }
+      hitsLeft--;
+    }
 
-  // returns current number of hits asteroid can sustain.
-  int hits() {
+    // returns current number of hits asteroid can sustain.
+    int hits() {
 
-    return hitsLeft;
-  }
+      return hitsLeft;
+    }
 }
 
-
 //Change hardcoded radius, solve and clean up class once issue it fixed.
-class Projectile{
-  PVector blocation = new PVector(),direction = new PVector();
-  float speed,distanceTravelled,maxDistance;
+class Projectile {
+  PVector blocation = new PVector(), direction = new PVector();
+  float speed, distanceTravelled, maxDistance;
   boolean visible;
   float radius;
-  
-  Projectile(PVector shipDirection, PVector shipLocation, float spd, float maxDistance){
+
+  Projectile(PVector shipDirection, PVector shipLocation, float spd, float maxDistance) {
     this.speed = spd;
     this.visible = true;
-    this.blocation = blocation.set(shipLocation.x,shipLocation.y+ship.shipRad); //added shipRad to Y, as shipLocation.y had been changed to tip
-    this.direction = direction.set(shipDirection.x,shipDirection.y);
+    this.blocation = blocation.set(shipLocation.x, shipLocation.y+ship.shipRad); //added shipRad to Y, as shipLocation.y had been changed to tip
+    this.direction = direction.set(shipDirection.x, shipDirection.y);
     this.radius = 5;
     this.maxDistance = maxDistance;
     this.distanceTravelled = 0;
   }
-  
-  
+
+
   //Update position of projectile
-  void move(){
+  void move() {
     distanceTravelled += 1;
     println(distanceTravelled);
-    blocation.add(direction); 
+    blocation.add(direction);
   }
-  
-  void display(){
-  //Draw bullet.
-  ellipse(blocation.x, blocation.y, 5, 5);
-    
+
+  void display() {
+    //Draw bullet.
+    ellipse(blocation.x, blocation.y, 5, 5);
   }
-  
 }
 
 void keyPressed() {
@@ -370,8 +366,31 @@ void keyReleased() {
   if (key=='a'||keyCode==LEFT) {
     sLEFT=false;
   }
-   if (key=='l'||key==' ') {
+  if (key=='l'||key==' ') {
     sSHOOT=true;
+  }
+}
+
+// Fill random shapes array.
+void drawShapes() {
+  for (int i = 0; i < shapes.length; i++) {
+    noFill();
+    stroke(255);
+    randomShape = createShape();
+    randomShape.beginShape();
+    randomShape.vertex(50, 50);
+    randomShape.vertex(random(50, 70), random(60, 80));
+    randomShape.vertex(random(80, 100), random(50, 50));
+    randomShape.vertex(random(90, 110), random(70, 90));
+    randomShape.vertex(random(75, 95), random(80, 100));
+    randomShape.vertex(random(75, 95), random(100, 120));
+    randomShape.vertex(random(55, 75), random(100, 110));
+    randomShape.vertex(random(25, 50), random(80, 100));
+    randomShape.vertex(random(30, 50), random(70, 90));
+    randomShape.vertex(random(20, 30), random(50, 60));
+    randomShape.vertex(50, 50);
+    randomShape.endShape(CLOSE);
+    shapes[i] = randomShape;
   }
 }
 
@@ -380,30 +399,26 @@ void detectCollisions() {
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);  
     // Check to see if the player's ship is hit first - game over
-    if (circleCollision(ship.xPos,ship.yPos,ship.radius,asteroid.xPos(), asteroid.yPos(), asteroid.radius)){
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
       //println("Game over");
     }
-    
-    for(int j=projectiles.size()-1; j >= 0;j--){
+
+    for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
-      if(!bullet.visible){
-         continue; 
-      }
-      else{
+      if (!bullet.visible) {
+        continue;
+      } else {
         if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
-        projectiles.remove(j);
-        asteroid.hitsLeft();
-        // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
-        asteroids.remove(i);
-        if(asteroid.hits() >0){
-          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
-          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-5, 5), random(-5, 5)));
-        }
-
+          projectiles.remove(j);
+          asteroid.hitsLeft();
+          // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
+          asteroids.remove(i);
+          if (asteroid.hits() >0) {
+            asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
+            asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
+          }
         }
       }
-
     }
-    
   }
 }
