@@ -25,7 +25,7 @@ float bulletMaxDistance = 500;
 
 void setup() {
   frameRate(60);
-  size(800, 800,P3D);//added in P3D renderer, to use modelX& modelY 
+  size(800, 800);
   ship = new Ship();
   smooth(); 
   // Generate an array of random asteroid shapes.
@@ -198,8 +198,8 @@ pushMatrix();
     vertex(x3, y3);//bottom right
     endShape(CLOSE);
     //coordinates for nose outside of matrix
-    noseX=modelX(0,y1,0);
-    noseY=modelY(0,y1,0);
+    noseX=screenX(0,y1);
+    noseY=screenY(0,y1);
     popMatrix();
     fill(255);
     
