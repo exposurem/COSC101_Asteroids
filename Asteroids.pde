@@ -12,7 +12,6 @@ ArrayList<Asteroid> asteroids;
 ArrayList<Projectile> projectiles;
 // Random asteroids.
 PShape randomShape;
-PShape[] shapes = new PShape[10];
 PShape spaceship;//consider changing to image
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
 Ship ship;//ship object
@@ -20,6 +19,8 @@ Ship ship;//ship object
 int numberAsteroids = 5;
 // Asteroid hitpoints.
 int asteroidLife = 3;
+int shapeLength = numberAsteroids * 3;
+PShape[] shapes = new PShape[shapeLength];
 //configuration setting
 float bulletMaxDistance = 500;
 
