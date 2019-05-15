@@ -25,7 +25,7 @@ float bulletMaxDistance = 500;
 
 void setup() {
   frameRate(60);
-  size(800, 800); 
+  size(800, 800,P3D);//added in P3D renderer, to use modelX& modelY 
   ship = new Ship();
   smooth(); 
   // Generate an array of random asteroid shapes.
@@ -99,7 +99,8 @@ class Ship {
 
   PVector location, dir, noseLocation, acceleration, velocity;
   int bulletSpeed; //changed from moveSpeed
-  float xPos, yPos, x1, y1, x2, y2, x3, y3, yNoseOffset, radius, shipRad;
+  float xPos, yPos, noseX,noseY,shipRad;
+  float radius, x1, y1, x2, y2, x3, y3,yNoseOffset; //semi-redundant, will clean up once sorted
   float turnFactor;
   float topSpeed;
   float resistance, mass, thrustFactor;
@@ -108,7 +109,7 @@ class Ship {
   Ship() {
 
     //controls speed, amount of rotation and scale of ship, feel free to change
-    bulletSpeed=100;//might be worth moving to bullet class, no longer used on ship.
+    bulletSpeed=10;//might be worth moving to bullet class, no longer used on ship.
     resistance=0.995;//lower = resistance
     mass = 1;
     turnFactor =6;//turning tightness
@@ -116,12 +117,16 @@ class Ship {
     shipRad =30;//size of ship
     thrustFactor=0.15;//propelling
 
-
-
+    
+    x1 =0;y1=-shipRad;//top
+    x2=-shipRad;y2=shipRad;//bottom left
+    x3=shipRad;y3=shipRad;//bottom right
     //might have to update radius, ship no longer based on equilateral triangle.
+    //radius=shipRad;//think this should work, untested though.
     //Collision detection radius.
     radius = (abs(x2) + abs(x3)) /2;
     yNoseOffset = -27;
+    
     //random starting coordinates
     xPos=random(shipRad, width-shipRad);
     yPos=random(0, height-(shipRad*2));
@@ -129,43 +134,39 @@ class Ship {
     acceleration = new PVector(0, 0);
     velocity = new PVector(0, 0);
     location = new PVector(xPos, yPos);
-    noseLocation = new PVector(location.x, location.y-yNoseOffset);
+    noseLocation = new PVector(location.x, location.y);
     dir = new PVector(0, -1);
   }
   void updatePos() {
     xPos=location.x;
     yPos=location.y;
-
     heading = dir.heading();
+    
     velocity.add(acceleration);
     velocity.mult(resistance);
     velocity.limit(topSpeed);
     location.add(velocity);
     acceleration.mult(0);//reset acceleration
+    noseLocation.set(noseX,noseY);//not sure if this needs to be a PVector but ship can now shoot from nose based on noseX&Y
 
     if (sUP) {
       propel();
-      //location.add(dir);
-      noseLocation.add(dir);
     } 
     if (sDOWN) {
       propel();
-      //location.sub(dir);
-      noseLocation.sub(dir);
     }
     if (sLEFT) {
       rotateShip(dir, radians(-turnFactor));
-      noseLocation.add(dir);
+      //noseLocation.add(dir);
     }
     if (sRIGHT) {
       rotateShip(dir, radians(turnFactor));
-      noseLocation.sub(dir);
+      //noseLocation.sub(dir);
     }
     if (sSHOOT) {
       shoot();
       sSHOOT = false;
     }
-    //println(noseLocation.x);
   }
   //newton's law: acceleration = force/mass
   void applyForce(PVector force) {
@@ -185,22 +186,25 @@ class Ship {
     applyForce(force);
   }
   void display() {
-
-    pushMatrix();
+pushMatrix();
     translate(location.x, location.y+shipRad);
-    rotate(heading-HALF_PI);
+    rotate(heading+HALF_PI);
     fill(175);
+    stroke(175);
     beginShape();
-    vertex(0, shipRad);//top
-    vertex(shipRad, -shipRad);//bottom left
-    vertex(0, -shipRad/2.0);//bottom middle
-    vertex(-shipRad, -shipRad);//bottom right
+    vertex(x1, y1);//top
+    vertex(x2, y2);//bottom left
+    vertex(0, shipRad/2.0);//bottom middle
+    vertex(x3, y3);//bottom right
     endShape(CLOSE);
+    //coordinates for nose outside of matrix
+    noseX=modelX(0,y1,0);
+    noseY=modelY(0,y1,0);
     popMatrix();
     fill(255);
-
-    ellipse(location.x, location.y, 5, 5);//tip distance
-    ellipse(location.x, location.y+shipRad, 5, 5);//center
+    
+    //ellipse(noseLocation.x,noseLocation.y,5,5);//ship nose location
+    //ellipse(location.x, location.y+shipRad, 5, 5);//ship center of rotation
   }
 
   void edgeCheck() {
@@ -218,7 +222,6 @@ class Ship {
 
   //determines direction/heading
   void rotateShip(PVector vector, float angle) {
-
     float temp = dir.x;
     vector.x = dir.x*cos(angle) - vector.y*sin(angle);
     vector.y = temp*sin(angle) + vector.y*cos(angle);
@@ -226,7 +229,7 @@ class Ship {
   //Adds a new projectile
   void shoot() {
 
-    projectiles.add(new Projectile(dir, location, bulletSpeed, bulletMaxDistance));
+    projectiles.add(new Projectile(dir, noseLocation, bulletSpeed, bulletMaxDistance));
   }
 }
 
@@ -316,7 +319,7 @@ class Projectile {
   Projectile(PVector shipDirection, PVector shipLocation, float spd, float maxDistance) {
     this.speed = spd;
     this.visible = true;
-    this.blocation = blocation.set(shipLocation.x, shipLocation.y+ship.shipRad); //added shipRad to Y, as shipLocation.y had been changed to tip
+    this.blocation = blocation.set(shipLocation.x, shipLocation.y);
     this.direction = direction.set(shipDirection.x, shipDirection.y);
     this.radius = 5;
     this.maxDistance = maxDistance;
@@ -338,7 +341,7 @@ class Projectile {
 }
 
 void keyPressed() {
-  //direction movement
+  //added arrow keys for movement
   if (key== 'w'|| keyCode==UP) {
     sUP=true;
   }
@@ -366,7 +369,7 @@ void keyReleased() {
   if (key=='a'||keyCode==LEFT) {
     sLEFT=false;
   }
-  if (key=='l'||key==' ') {
+  if (key=='l'||key==' ') {//added spacebar for shooting
     sSHOOT=true;
   }
 }
