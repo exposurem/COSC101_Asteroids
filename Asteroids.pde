@@ -331,7 +331,7 @@ class Projectile {
     this.speed = spd;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
-    this.direction = direction.set(shipDirection.x, shipDirection.y);
+    this.direction = direction.set(shipDirection.x * 4, shipDirection.y, *4);
     this.radius = 5;
     this.maxDistance = maxDistance;
     this.distanceTravelled = 0;
