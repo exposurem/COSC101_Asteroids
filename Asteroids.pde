@@ -68,13 +68,16 @@ Function Purpose: To remove projectiles from the array if they go beyond the bou
 void updateAndDrawProjectiles() {
 
   for (int i = projectiles.size()-1; i >= 0; i--) { 
-    Projectile bullets = projectiles.get(i);  
+    Projectile bullet = projectiles.get(i);
+    
+    PVector checkedLocation = mapEdgeWrap(bullet.blocation, bullet.radius);
+    bullet.blocation = checkedLocation;
 
-    if (bullets.blocation.x >= width  || bullets.blocation.x <= 0 || bullets.blocation.y >= height || bullets.blocation.y <=0 || bullets.distanceTravelled >= bulletMaxDistance) {
+    if (bullet.distanceTravelled >= bulletMaxDistance) {
       projectiles.remove(i);
     } else {
-      bullets.move();
-      bullets.display();
+      bullet.move();
+      bullet.display();
     }
   }
 }
@@ -92,6 +95,21 @@ boolean circleCollision(float xPos1, float yPos1, float radOne, float xPos2, flo
     return true;
   }
   return false;
+}
+
+PVector mapEdgeWrap(PVector object, float radius) {
+  if (object.x < -radius) { //left
+    object.x = width+radius;
+  } else if (object.x > width+radius) { //right
+    object.x = -radius;
+  }
+  if (object.y <= -radius*2) { //top
+    object.y = height;
+  } else if (object.y > height) { //bottom
+    object.y = -radius*2;
+  }
+  return object;
+  
 }
 
 //feel free to modify this class structure or give advice.
@@ -208,16 +226,8 @@ pushMatrix();
   }
 
   void edgeCheck() {
-    if (location.x < -shipRad) { //left
-      location.x = width+shipRad;
-    } else if (location.x > width+shipRad) { //right
-      location.x = -shipRad;
-    }
-    if (location.y <= -shipRad*2) { //top
-      location.y = height;
-    } else if (location.y > height) { //bottom
-      location.y = -shipRad*2;
-    }
+    PVector checkedLocation = mapEdgeWrap(location,radius);
+    location = checkedLocation;
   }
 
   //determines direction/heading
@@ -330,7 +340,6 @@ class Projectile {
   //Update position of projectile
   void move() {
     distanceTravelled += 1;
-    println(distanceTravelled);
     blocation.add(direction);
   }
 
