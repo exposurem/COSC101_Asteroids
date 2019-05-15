@@ -70,7 +70,7 @@ void updateAndDrawProjectiles() {
 
   for (int i = projectiles.size()-1; i >= 0; i--) { 
     Projectile bullet = projectiles.get(i);
-    
+
     PVector checkedLocation = mapEdgeWrap(bullet.blocation, bullet.radius);
     bullet.blocation = checkedLocation;
 
@@ -110,7 +110,6 @@ PVector mapEdgeWrap(PVector object, float radius) {
     object.y = -radius*2;
   }
   return object;
-  
 }
 
 //feel free to modify this class structure or give advice.
@@ -118,38 +117,37 @@ class Ship {
 
   PVector location, dir, noseLocation, acceleration, velocity;
   int bulletSpeed; //changed from moveSpeed
-  float xPos, yPos, noseX,noseY,shipRad;
-  float radius, x1, y1, x2, y2, x3, y3,yNoseOffset; //semi-redundant, will clean up once sorted
-  float turnFactor;
-  float topSpeed;
+  float xPos, yPos, noseX, noseY;
+  float radius, x1, y1, x2, y2, x3, y3, x4, y4, y5; 
+  float turnFactor, topSpeed, heading;
   float resistance, mass, thrustFactor;
-  float heading;
 
   Ship() {
-
     //controls speed, amount of rotation and scale of ship, feel free to change
-    bulletSpeed=10;//might be worth moving to bullet class, no longer used on ship.
-    resistance=0.995;//lower = resistance
+    //down to thrustFact can all be modified in our settings class once that's made
+    bulletSpeed=int(topSpeed);//might be worth moving to bullet class, no longer used on ship.
+    resistance=0.995;//lower = more resistance
     mass = 1;
     turnFactor =6;//turning tightness
-    topSpeed = 8;
-    shipRad =30;//size of ship
+    topSpeed = 6;
+    radius =30;//size of ship and collision detection radius
     thrustFactor=0.15;//propelling
 
-    
-    x1 =0;y1=-shipRad;//top
-    x2=-shipRad;y2=shipRad;//bottom left
-    x3=shipRad;y3=shipRad;//bottom right
-    //might have to update radius, ship no longer based on equilateral triangle.
-    //radius=shipRad;//think this should work, untested though.
-    //Collision detection radius.
-    radius = (abs(x2) + abs(x3)) /2;
-    yNoseOffset = -27;
-    
-    //random starting coordinates
-    xPos=random(shipRad, width-shipRad);
-    yPos=random(0, height-(shipRad*2));
+    //vertex based on isosceles triangle.
+    x1 =0; 
+    y1=-radius;//top
+    x2=-radius; 
+    y2=radius;//bottom left
+    x3=radius; 
+    y3=radius;//bottom right
+    x4=0; 
+    y4=radius/2.0; //bottom center
+    y5=(y3+y4)/2.0;//coord for flame
 
+    //random starting coordinates
+    xPos=random(radius, width-radius);
+    yPos=random(0, height-(radius*2));
+    //initialise vectors
     acceleration = new PVector(0, 0);
     velocity = new PVector(0, 0);
     location = new PVector(xPos, yPos);
@@ -160,14 +158,13 @@ class Ship {
     xPos=location.x;
     yPos=location.y;
     heading = dir.heading();
-    
+
     velocity.add(acceleration);
     velocity.mult(resistance);
     velocity.limit(topSpeed);
     location.add(velocity);
-    acceleration.mult(0);//reset acceleration
-    noseLocation.set(noseX,noseY);//not sure if this needs to be a PVector but ship can now shoot from nose based on noseX&Y
-
+    acceleration.mult(0);//reset acceleration to 0 each frame
+    noseLocation.set(noseX, noseY);
     if (sUP) {
       propel();
     } 
@@ -197,37 +194,49 @@ class Ship {
   void propel() {
     PVector force = new PVector(cos(heading), sin(heading));
     if (sUP) {
-      force.mult(thrustFactor);
+      force.mult(thrustFactor);//propelling
     }
     if (sDOWN) {
-      force.mult(-thrustFactor);
+      force.mult(-thrustFactor);//reverse
     }
     applyForce(force);
   }
   void display() {
-pushMatrix();
-    translate(location.x, location.y+shipRad);
+    pushMatrix();
+    translate(location.x, location.y+radius);
     rotate(heading+HALF_PI);
     fill(175);
     stroke(175);
+    //getting a bit cluttered - maybe make into drawShip func and call from here
     beginShape();
     vertex(x1, y1);//top
     vertex(x2, y2);//bottom left
-    vertex(0, shipRad/2.0);//bottom middle
+    vertex(x4, y4);//bottom middle
     vertex(x3, y3);//bottom right
     endShape(CLOSE);
+    if (sUP) {//if propelling show exhaust flame
+      //strokeWeight(4);
+      stroke(255); //flame colour
+      //noFill();
+      beginShape();
+      vertex(0, radius/2.0);
+      vertex(x2+radius/2.0, y5);
+      vertex(x1, y3+radius/2.0);//peak of flame
+      vertex(x3-radius/2.0, y5);
+      endShape(CLOSE);
+    }
     //coordinates for nose outside of matrix
-    noseX=screenX(0,y1);
-    noseY=screenY(0,y1);
+    noseX=screenX(0, y1);
+    noseY=screenY(0, y1);
     popMatrix();
     fill(255);
-    
+    stroke(255);
     //ellipse(noseLocation.x,noseLocation.y,5,5);//ship nose location
     //ellipse(location.x, location.y+shipRad, 5, 5);//ship center of rotation
   }
 
   void edgeCheck() {
-    PVector checkedLocation = mapEdgeWrap(location,radius);
+    PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
   }
 
@@ -245,79 +254,79 @@ pushMatrix();
 }
 
 class Asteroid {
-    //Position.
-    float xPos, yPos;
-    //Radius for collision detection.
-    //float boundaryRadius;
-    // Speed/direction on x axis.
-    float xSpeed;
-    // Speed/direction on y axis.
-    float ySpeed; 
-    //Number of times to hit.
-    float radius = 25;
-    int hitsLeft;
-    int largeAsteroid = 100;
-    int mediumAsteroid = 70;
-    int smallAsteroid = 40;
-    // Initialise.
-    Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
-      this.xPos = xPos;
-      this.yPos = yPos;
-      this.xSpeed = xSpeed;
-      this.ySpeed = ySpeed;
-      this.hitsLeft = hitsLeft;
+  //Position.
+  float xPos, yPos;
+  //Radius for collision detection.
+  //float boundaryRadius;
+  // Speed/direction on x axis.
+  float xSpeed;
+  // Speed/direction on y axis.
+  float ySpeed; 
+  //Number of times to hit.
+  float radius = 25;
+  int hitsLeft;
+  int largeAsteroid = 100;
+  int mediumAsteroid = 70;
+  int smallAsteroid = 40;
+  // Initialise.
+  Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
+    this.xPos = xPos;
+    this.yPos = yPos;
+    this.xSpeed = xSpeed;
+    this.ySpeed = ySpeed;
+    this.hitsLeft = hitsLeft;
+  }
+
+  // Draw each Asteroid to the screen at the appropriate size.
+  void drawAsteroid(PShape shapes) {
+    if (hitsLeft == 3) {
+      shape(shapes, xPos, yPos, largeAsteroid, largeAsteroid);
+    } else if (hitsLeft == 2) {
+      shape(shapes, xPos, yPos, mediumAsteroid, mediumAsteroid);
+    } else if (hitsLeft == 1) {
+      shape(shapes, xPos, yPos, smallAsteroid, smallAsteroid);
     }
+  }
 
-    // Draw each Asteroid to the screen at the appropriate size.
-    void drawAsteroid(PShape shapes) {
-      if (hitsLeft == 3) {
-        shape(shapes, xPos, yPos, largeAsteroid, largeAsteroid);
-      } else if (hitsLeft == 2) {
-        shape(shapes, xPos, yPos, mediumAsteroid, mediumAsteroid);
-      } else if (hitsLeft == 1) {
-        shape(shapes, xPos, yPos, smallAsteroid, smallAsteroid);
-      }
+  // Handles asteroid movement and boundary checking.
+  void move() {
+    xPos += xSpeed;
+    yPos += ySpeed;
+    if (xPos > width) {
+      xPos = 0;
+    } else if (xPos < 0) {
+      xPos = width;
     }
-
-    // Handles asteroid movement and boundary checking.
-    void move() {
-      xPos += xSpeed;
-      yPos += ySpeed;
-      if (xPos > width) {
-        xPos = 0;
-      } else if (xPos < 0) {
-        xPos = width;
-      }
-      if (yPos > height) {
-        yPos = 0;
-      } else if (yPos < 0) {
-        yPos = height;
-      }
+    if (yPos > height) {
+      yPos = 0;
+    } else if (yPos < 0) {
+      yPos = height;
     }
+  }
 
-    // Returns x coordinate of Asteroid.
-    float xPos() {
+  // Returns x coordinate of Asteroid.
+  float xPos() {
 
-      return(xPos);
-    }
+    return(xPos);
+  }
 
-    // Returns y coordinate of Asteroid.
-    float yPos() {
+  // Returns y coordinate of Asteroid.
+  float yPos() {
 
-      return(yPos);
-    }
+    return(yPos);
+  }
 
-    // Subtracts a point from the asteroids life.
-    void hitsLeft() {
+  // Subtracts a point from the asteroids life.
+  void hitsLeft() {
 
-      hitsLeft--;
-    }
+    hitsLeft--;
+  }
 
-    // returns current number of hits asteroid can sustain.
-    int hits() {
+  // returns current number of hits asteroid can sustain.
+  int hits() {
 
-      return hitsLeft;
-    }
+    return hitsLeft;
+  }
 }
 
 //Change hardcoded radius, solve and clean up class once issue it fixed.
@@ -347,40 +356,6 @@ class Projectile {
   void display() {
     //Draw bullet.
     ellipse(blocation.x, blocation.y, 5, 5);
-  }
-}
-
-void keyPressed() {
-  //added arrow keys for movement
-  if (key== 'w'|| keyCode==UP) {
-    sUP=true;
-  }
-  if (key=='s' || keyCode==DOWN) {
-    sDOWN=true;
-  }
-  if (key=='d' || keyCode==RIGHT) {
-    sRIGHT=true;
-  }
-  if (key=='a'|| keyCode==LEFT) {
-    sLEFT=true;
-  }
-}
-
-void keyReleased() {
-  if (key== 'w'||keyCode==UP) {
-    sUP=false;
-  }
-  if (key=='s'|| keyCode==DOWN) {
-    sDOWN=false;
-  }
-  if (key=='d'||keyCode==RIGHT) {
-    sRIGHT=false;
-  }
-  if (key=='a'||keyCode==LEFT) {
-    sLEFT=false;
-  }
-  if (key=='l'||key==' ') {//added spacebar for shooting
-    sSHOOT=true;
   }
 }
 
@@ -433,5 +408,39 @@ void detectCollisions() {
         }
       }
     }
+  }
+}
+
+void keyPressed() {
+  //added arrow keys for movement
+  if (key== 'w'|| keyCode==UP) {
+    sUP=true;
+  }
+  if (key=='s' || keyCode==DOWN) {
+    sDOWN=true;
+  }
+  if (key=='d' || keyCode==RIGHT) {
+    sRIGHT=true;
+  }
+  if (key=='a'|| keyCode==LEFT) {
+    sLEFT=true;
+  }
+}
+
+void keyReleased() {
+  if (key== 'w'||keyCode==UP) {
+    sUP=false;
+  }
+  if (key=='s'|| keyCode==DOWN) {
+    sDOWN=false;
+  }
+  if (key=='d'||keyCode==RIGHT) {
+    sRIGHT=false;
+  }
+  if (key=='a'||keyCode==LEFT) {
+    sLEFT=false;
+  }
+  if (key=='l'||key==' ') {//added spacebar for shooting
+    sSHOOT=true;
   }
 }
