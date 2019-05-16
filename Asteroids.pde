@@ -408,7 +408,7 @@ void detectCollisions() {
 }
 
 void initScreen() {
-
+  
   textSize(100);
   fill(255, 255, 255);
   textAlign(CENTER);
@@ -420,7 +420,7 @@ void initScreen() {
   textSize(25);
   fill(255, 255, 255);
   textAlign(CENTER);
-  text("W, A, S, D keys for movement, L/SPACEBAR to shoot.", width/2, 750);
+  text("W,A,S,D keys for movement, L/SPACEBAR to shoot, p to pause." , width/2, 750);
 }
 
 void gameOverScreen() {
@@ -433,6 +433,10 @@ void gameOverScreen() {
   fill(0, 102, 153);
   textAlign(CENTER);
   text("Click mouse to start a new game.", width/2, 450);
+}
+
+void pauseScreen(){
+  noLoop();
 }
 
 void startGame(){
@@ -477,6 +481,11 @@ void mousePressed() {
 void keyPressed() {
   if (gameScreen == 0) { 
     gameScreen = 1;
+  }
+  if (key== 'p' && gameScreen == 1) {
+    gameScreen = 3;
+  } else if (key == 'p' && gameScreen == 3){
+  gameScreen = 1;
   }
   //added arrow keys for movement
   if (key== 'w'|| keyCode==UP) {
