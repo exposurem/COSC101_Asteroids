@@ -27,7 +27,7 @@ int numberAsteroids = 3;
 // Asteroid hitpoints.
 int asteroidLife = 3;
 // Length of the shapes array
-int shapeLength = numberAsteroids * 3;
+int shapeLength = numberAsteroids * 5;
 PShape[] shapes = new PShape[shapeLength];
 //  0 = Start screen, 1 = gameplay, 2 = Game Over screen.
 int gameScreen = 0;
@@ -258,10 +258,7 @@ class Asteroid {
   PVector velocity;
   //Number of times to hit.
   int hitsLeft;
-  int largeAsteroid = 100;
-  int mediumAsteroid = 70;
-  int smallAsteroid = 40;
-  float radius = largeAsteroid/2;
+  float radius = 50;
   // Initialise.
   Asteroid(PVector location, PVector velocity, int hitsLeft) {
     this.location = location;
@@ -272,11 +269,11 @@ class Asteroid {
   // Draw each Asteroid to the screen at the appropriate size.
   void drawAsteroid(PShape shapes) {
     if (hitsLeft == 3) {
-      shape(shapes, location.x, location.y, largeAsteroid, largeAsteroid);
+      shape(shapes, location.x, location.y, radius*3, radius*3);
     } else if (hitsLeft == 2) {
-      shape(shapes, location.x, location.y, mediumAsteroid, mediumAsteroid);
+      shape(shapes, location.x, location.y, radius*2, radius*2);
     } else if (hitsLeft == 1) {
-      shape(shapes, location.x, location.y, smallAsteroid, smallAsteroid);
+      shape(shapes, location.x, location.y, radius, radius);
     }
   }
 
@@ -297,6 +294,7 @@ class Asteroid {
 
   // Returns x coordinate of Asteroid.
   float xPos() {
+    point(location.x, location.y);
     return location.x;
   }
 
@@ -308,12 +306,14 @@ class Asteroid {
   // Subtracts a point from the asteroids life.
   void hitsLeft() {
     hitsLeft--;
-    if(hitsLeft == 2){
-     radius = mediumAsteroid/2; 
-    }
-    else{
-      radius = smallAsteroid/2;
-    }
+  }
+  
+  float aRadius(){
+    if (hitsLeft == 3){
+      return (radius*3)/2;
+    } else if (hitsLeft == 2){
+      return (radius*2)/2;
+    } else return radius/2;
   }
 
   // returns current number of hits asteroid can sustain.
@@ -401,19 +401,20 @@ void drawShapes() {
   for (int i = 0; i < shapes.length; i++) {
     noFill();
     stroke(255);
+    shapeMode(CENTER);
     randomShape = createShape();
     randomShape.beginShape();
     randomShape.vertex(50, 50);
-    randomShape.vertex(random(50, 70), random(60, 80));
-    randomShape.vertex(random(80, 100), random(50, 50));
-    randomShape.vertex(random(90, 110), random(70, 90));
-    randomShape.vertex(random(75, 95), random(80, 100));
-    randomShape.vertex(random(75, 95), random(100, 120));
-    randomShape.vertex(random(55, 75), random(100, 110));
-    randomShape.vertex(random(25, 50), random(80, 100));
-    randomShape.vertex(random(30, 50), random(70, 90));
-    randomShape.vertex(random(20, 30), random(50, 60));
-    randomShape.vertex(50, 50);
+    randomShape.vertex(random(40, 60),  random(0, 20));
+    randomShape.vertex(random(80, 100),  random(5, 25));
+    randomShape.vertex(random(70, 90), random(30, 40));
+    randomShape.vertex(random(90, 110),  random(25, 45));
+    randomShape.vertex(random(70, 90),  random(70, 90));
+    randomShape.vertex(random(50, 50), random(65, 75));
+    randomShape.vertex(random(15, 25),  random(70, 90));
+    randomShape.vertex(random(20, 40),  random(40, 60));
+    randomShape.vertex(random(0, 20),  random(30, 40));
+    randomShape.vertex(random(15, 35),  random(5, 25));
     randomShape.endShape(CLOSE);
     shapes[i] = randomShape;
   }
@@ -423,8 +424,12 @@ void drawShapes() {
 void detectCollisions() {
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);  
+    noFill();
+    stroke(255, 0, 0);
+    ellipse(asteroid.xPos(), asteroid.yPos(), asteroid.aRadius()*2, asteroid.aRadius()*2);
+    ellipse(ship.xPos, ship.yPos, ship.radius, ship.radius);
     // Check to see if the player's ship is hit first - game over
-    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
       println("Game over");
       gameOver();
       setup();
@@ -432,8 +437,9 @@ void detectCollisions() {
 
     for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
-
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
+      noFill();
+      stroke(255, 0, 0);
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
         explosionSound.play();
         projectiles.remove(j);
         aScoreBoard.update(asteroid.hitsLeft);
