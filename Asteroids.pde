@@ -129,12 +129,10 @@ PVector mapEdgeWrap(PVector object, float radius) {
 //feel free to modify this class structure or give advice.
 class Ship {
 
-  PVector location, dir, noseLocation, acceleration, velocity;
-  int bulletSpeed; //changed from moveSpeed
-  float xPos, yPos, noseX, noseY;
-  float radius, x1, y1, x2, y2, x3, y3, x4, y4, y5; 
-  float turnFactor, topSpeed, heading;
-  float resistance, mass, thrustFactor;
+  PVector location, direction, noseLocation, acceleration, velocity;
+  float xPos, yPos, noseX, noseY, radius; 
+  float turnFactor, heading; 
+  float resistance, mass, thrustFactor,maxSpeed;
 
   Ship() {
     //controls speed, amount of rotation and scale of ship, feel free to change
@@ -142,41 +140,29 @@ class Ship {
     resistance=0.995;//lower = more resistance
     mass = 1;
     turnFactor =6;//turning tightness
-    topSpeed = 6;
-    radius =30;//size of ship and collision detection radius
-    thrustFactor=0.15;//propelling
-
-    //vertex based on isosceles triangle.
-    x1 =0; 
-    y1=-radius;//top
-    x2=-radius; 
-    y2=radius;//bottom left
-    x3=radius; 
-    y3=radius;//bottom right
-    x4=0; 
-    y4=radius/2.0; //bottom center
-    y5=(y3+y4)/2.0;//coord for flame
-
-    //random starting coordinates
-    xPos=random(radius, width-radius);
-    yPos=random(0, height-(radius*2));
+    maxSpeed = 6;
+    radius =25;//size of ship and collision detection radius
+    thrustFactor=0.125;//propelling
+    
+    xPos = width/2.0; 
+    yPos = height/2.0;
     //initialise vectors
     acceleration = new PVector(0, 0);
     velocity = new PVector(0, 0);
-    location = new PVector(xPos, yPos);
-    noseLocation = new PVector(location.x, location.y);
-    dir = new PVector(0, -1);
+    location = new PVector(xPos, yPos+radius);
+    noseLocation = new PVector(location.x, location.y-radius);
+    direction = new PVector(0, -1);
   }
   void updatePos() {
     xPos=location.x;
     yPos=location.y;
-    heading = dir.heading();
-
+    heading = direction.heading();
+    
     velocity.add(acceleration);
     velocity.mult(resistance);
-    velocity.limit(topSpeed);
+    velocity.limit(maxSpeed);
     location.add(velocity);
-    acceleration.mult(0);//reset acceleration to 0 each frame
+    acceleration.set(0, 0);//reset acceleration so it doesn't stack
     noseLocation.set(noseX, noseY);
     if (sUP) {
       propel();
@@ -185,85 +171,85 @@ class Ship {
       propel();
     }
     if (sLEFT) {
-      rotateShip(dir, radians(-turnFactor));
-      //noseLocation.add(dir);
+      rotateShip(direction, radians(-turnFactor), heading);
     }
     if (sRIGHT) {
-      rotateShip(dir, radians(turnFactor));
-      //noseLocation.sub(dir);
+      rotateShip(direction, radians(turnFactor), heading);
     }
     if (sSHOOT) {
       shoot();
       sSHOOT = false;
     }
   }
-  //newton's law: acceleration = force/mass
-  void applyForce(PVector force) {
-    PVector temp = force.copy();
-    //PVector temp =dir.copy(); //add's force to turn, but without resistance at the moment.
-    force.div(mass);
-    acceleration.add(temp);
-  }
-  void propel() {
-    PVector force = new PVector(cos(heading), sin(heading));
-    if (sUP) {
-      force.mult(thrustFactor);//propelling
-    }
-    if (sDOWN) {
-      force.mult(-thrustFactor);//reverse
-    }
-    applyForce(force);
-  }
+  
   void display() {
     pushMatrix();
-    translate(location.x, location.y+radius);
+    translate(location.x, location.y);
     rotate(heading+HALF_PI);
-    fill(175);
-    stroke(175);
-    //getting a bit cluttered - maybe make into drawShip func and call from here
-    beginShape();
-    vertex(x1, y1);//top
-    vertex(x2, y2);//bottom left
-    vertex(x4, y4);//bottom middle
-    vertex(x3, y3);//bottom right
-    endShape(CLOSE);
+    noFill();
+    drawShip();
     if (sUP) {//if propelling show exhaust flame
-      //strokeWeight(4);
-      stroke(255); //flame colour
-      //noFill();
-      beginShape();
-      vertex(0, radius/2.0);
-      vertex(x2+radius/2.0, y5);
-      vertex(x1, y3+radius/2.0);//peak of flame
-      vertex(x3-radius/2.0, y5);
-      endShape(CLOSE);
+      drawExhaust();
     }
     //coordinates for nose outside of matrix
-    noseX=screenX(0, y1);
-    noseY=screenY(0, y1);
+    noseX=screenX(0, -radius);
+    noseY=screenY(0, -radius);
     popMatrix();
-    fill(255);
     stroke(255);
     //ellipse(noseLocation.x,noseLocation.y,5,5);//ship nose location
-    //ellipse(location.x, location.y+shipRad, 5, 5);//ship center of rotation
+    //ellipse(location.x, location.y, 5, 5);//ship center of rotation
   }
-
+  
+  void drawShip() {
+    stroke(255);
+    beginShape();
+    vertex(0, -radius);//top
+    vertex(-radius, radius);//bottom left
+    vertex(0, radius/2.0);//bottom middle
+    vertex(radius, radius);//bottom right
+    endShape(CLOSE);
+  }
+  
+  void drawExhaust() {
+    //strokeWeight(3);
+    stroke(255); //flame colour
+    beginShape();
+    vertex(0, radius/2.0);
+    vertex(-radius/2.0, radius*0.75);
+    vertex(0, radius*1.5);//peak of flame
+    vertex(radius/2.0, radius*0.75);
+    endShape(CLOSE);
+  }
+  
+  void propel() {
+    PVector thrust = new PVector(cos(heading),sin(heading));
+    if (sUP) {
+      thrust.setMag(thrustFactor);//accelerate
+    }
+    if (sDOWN) {
+      thrust.setMag(-thrustFactor);//reverse
+    }
+    acceleration.div(mass);
+    acceleration.add(thrust);
+  }
+  
   void edgeCheck() {
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
   }
 
   //determines direction/heading
-  void rotateShip(PVector vector, float angle) {
-    float temp = dir.x;
-    vector.x = dir.x*cos(angle) - vector.y*sin(angle);
-    vector.y = temp*sin(angle) + vector.y*cos(angle);
+  void rotateShip(PVector vector, float heading, float turnFactor) {
+    heading +=turnFactor;
+    vector.x = vector.mag() * cos(heading);
+    vector.y = vector.mag() * sin(heading);
   }
+  
   //Adds a new projectile
   void shoot() {
     //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
     shootSound.play();
-    projectiles.add(new Projectile(dir, noseLocation,6, bulletMaxDistance));
+    projectiles.add(new Projectile(direction, noseLocation,6, bulletMaxDistance));
   }
 }
 
