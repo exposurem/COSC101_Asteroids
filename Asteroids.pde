@@ -4,9 +4,15 @@
  * Date: 06/05/2019
  * Course: COSC101 - Software Development Studio 1
  * Desc: Astroids game
- * Usage: Make sure to run in the processing environment and press play etc...
+ * Usage: Make sure to run in the processing environment, have the sound library installed and press play etc...
+ *
+      Resource Credits
+      Asteroid explosion - https://freesound.org/people/runningmind/sounds/387857/ 
+      Shooting sound - https://freesound.org/people/alphatrooper18/sounds/362420/
+                      
  */
 
+import processing.sound.*;
 //Array to store the asteroid objects
 ArrayList<Asteroid> asteroids;
 ArrayList<Projectile> projectiles;
@@ -15,6 +21,7 @@ PShape randomShape;
 PShape spaceship;//consider changing to image
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
 Ship ship;//ship object
+
 // Maximum number of largest asteroids on screen... Can tie to level.
 int numberAsteroids = 3;
 // Asteroid hitpoints.
@@ -26,12 +33,21 @@ PShape[] shapes = new PShape[shapeLength];
 int gameScreen = 0;
 //configuration setting
 float bulletMaxDistance = 250;
+SoundFile explosionSound;
+SoundFile shootSound;
+
+//Setting up outside of the setup() due to call from gameover. May need to split up things that
+//need to be reset between games in another function, and leave setup for the things that are done once.
+
+ScoreBoard aScoreBoard = new ScoreBoard(400,20); //score board object
 
 void setup() {
   frameRate(60);
   size(800, 800);
   background(0);
   ship = new Ship();
+  explosionSound = new SoundFile(this, "explosion.wav");
+  shootSound = new SoundFile(this, "shooting.wav");
   smooth(); 
   // Generate an array of random asteroid shapes.
   drawShapes();
@@ -123,7 +139,6 @@ class Ship {
   Ship() {
     //controls speed, amount of rotation and scale of ship, feel free to change
     //down to thrustFact can all be modified in our settings class once that's made
-    bulletSpeed=int(topSpeed);//might be worth moving to bullet class, no longer used on ship.
     resistance=0.995;//lower = more resistance
     mass = 1;
     turnFactor =6;//turning tightness
@@ -246,8 +261,9 @@ class Ship {
   }
   //Adds a new projectile
   void shoot() {
-
-    projectiles.add(new Projectile(dir, noseLocation, bulletSpeed, bulletMaxDistance));
+    //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
+    shootSound.play();
+    projectiles.add(new Projectile(dir, noseLocation,6, bulletMaxDistance));
   }
 }
 
@@ -261,11 +277,11 @@ class Asteroid {
   // Speed/direction on y axis.
   float ySpeed; 
   //Number of times to hit.
-  float radius = 25;
   int hitsLeft;
   int largeAsteroid = 100;
   int mediumAsteroid = 70;
   int smallAsteroid = 40;
+  float radius = largeAsteroid/2;
   // Initialise.
   Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
     this.xPos = xPos;
@@ -315,6 +331,12 @@ class Asteroid {
   // Subtracts a point from the asteroids life.
   void hitsLeft() {
     hitsLeft--;
+    if(hitsLeft == 2){
+     radius = mediumAsteroid/2; 
+    }
+    else{
+      radius = smallAsteroid/2;
+    }
   }
 
   // returns current number of hits asteroid can sustain.
@@ -324,17 +346,19 @@ class Asteroid {
 }
 
 //Change hardcoded radius, solve and clean up class once issue it fixed.
+//Normal speed = 6, level 2 = 5, level >=3 = 4.
 class Projectile {
   PVector blocation = new PVector(), direction = new PVector();
-  float speed, distanceTravelled, maxDistance;
+  float  distanceTravelled, maxDistance;
+  int speed;
   boolean visible;
   float radius;
 
-  Projectile(PVector shipDirection, PVector shipLocation, float spd, float maxDistance) {
-    this.speed = spd;
+  Projectile(PVector shipDirection, PVector shipLocation,int speed, float maxDistance) {
+    this.speed = speed;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
-    this.direction = direction.set(shipDirection.x * 4, shipDirection.y * 4);
+    this.direction = direction.set(shipDirection.x * speed, shipDirection.y * speed);
     this.radius = 5;
     this.maxDistance = maxDistance;
     this.distanceTravelled = 0;
@@ -351,6 +375,48 @@ class Projectile {
     //Draw bullet.
     ellipse(blocation.x, blocation.y, 5, 5);
   }
+}
+
+class ScoreBoard {
+  int score;
+  float xPos;
+  float yPos;
+  
+  ScoreBoard(float xPos, float yPos){
+   this.score = 0; 
+   this.xPos = xPos;
+   this.yPos = yPos;
+  }
+  //Method to update the score, largest asteroid worth the least, smallest the most. Based off hits left attribute.
+  void update(int hitsLeft){
+    switch(hitsLeft){
+      case 1:
+      score += 300;
+      break;
+      case 2:
+      score += 180;
+      break;
+      case 3: 
+      score += 100;
+      break;
+    }
+  }
+  
+  void reset(){
+    score = 0;
+    
+  }
+  
+  void drawMe(){
+    textSize(20);
+    fill(255, 255, 255);
+    textAlign(CENTER);
+    text("Score: " + aScoreBoard.score , aScoreBoard.xPos, aScoreBoard.yPos);
+    
+  }
+    
+
+    
 }
 
 // Fill random shapes array.
@@ -389,18 +455,17 @@ void detectCollisions() {
 
     for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
-      if (!bullet.visible) {
-        continue;
-      } else {
-        if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
-          projectiles.remove(j);
-          asteroid.hitsLeft();
-          // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
-          asteroids.remove(i);
-          if (asteroid.hits() >0) {
-            asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
-            asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
-          }
+
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
+        explosionSound.play();
+        projectiles.remove(j);
+        aScoreBoard.update(asteroid.hitsLeft);
+        asteroid.hitsLeft();
+        // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
+        asteroids.remove(i);
+        if (asteroid.hits() >0) {
+          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
+          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
         }
       }
     }
@@ -408,7 +473,6 @@ void detectCollisions() {
 }
 
 void initScreen() {
-  
   textSize(100);
   fill(255, 255, 255);
   textAlign(CENTER);
@@ -421,6 +485,7 @@ void initScreen() {
   fill(255, 255, 255);
   textAlign(CENTER);
   text("W,A,S,D keys for movement, L/SPACEBAR to shoot, p to pause." , width/2, 750);
+
 }
 
 void gameOverScreen() {
@@ -433,6 +498,10 @@ void gameOverScreen() {
   fill(0, 102, 153);
   textAlign(CENTER);
   text("Click mouse to start a new game.", width/2, 450);
+  textSize(30);
+  fill(0, 102, 153);
+  textAlign(CENTER);
+  text("Your score was: " + aScoreBoard.score, width/2, 650);
 }
 
 void pauseScreen(){
@@ -461,6 +530,7 @@ void gameScreen(){
       asteroid.move();
       asteroid.drawAsteroid(shapes[i]);
     }
+    aScoreBoard.drawMe();
     detectCollisions();
     ship.updatePos();
     ship.edgeCheck();
@@ -474,6 +544,7 @@ void mousePressed() {
     gameScreen = 1;
   }
   if (gameScreen == 2) {
+    aScoreBoard.reset();
     gameScreen = 1;
   }
 }
