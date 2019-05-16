@@ -32,7 +32,7 @@ PShape[] shapes = new PShape[shapeLength];
 //  0 = Start screen, 1 = gameplay, 2 = Game Over screen.
 int gameScreen = 0;
 //configuration setting
-float bulletMaxDistance = 250;
+float bulletMaxDistance = 200;
 SoundFile explosionSound;
 SoundFile shootSound;
 
@@ -57,7 +57,7 @@ void setup() {
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
   for (int i = 0; i < numberAsteroids; i++) { 
-    asteroids.add(new Asteroid(random(width), random(height), asteroidLife, random(-2, 2), random(-2, 2)));
+    asteroids.add(new Asteroid(new PVector(random(random(0, 100)), random(width-100, width), random(height)), (new PVector(random(-2, 2), random(-2, 2))), asteroidLife));
   }
 
   projectiles = new ArrayList<Projectile>();
@@ -254,14 +254,8 @@ class Ship {
 }
 
 class Asteroid {
-  //Position.
-  float xPos, yPos;
-  //Radius for collision detection.
-  //float boundaryRadius;
-  // Speed/direction on x axis.
-  float xSpeed;
-  // Speed/direction on y axis.
-  float ySpeed; 
+  PVector location;
+  PVector velocity;
   //Number of times to hit.
   int hitsLeft;
   int largeAsteroid = 100;
@@ -269,49 +263,46 @@ class Asteroid {
   int smallAsteroid = 40;
   float radius = largeAsteroid/2;
   // Initialise.
-  Asteroid(float xPos, float yPos, int hitsLeft, float xSpeed, float ySpeed) {
-    this.xPos = xPos;
-    this.yPos = yPos;
-    this.xSpeed = xSpeed;
-    this.ySpeed = ySpeed;
+  Asteroid(PVector location, PVector velocity, int hitsLeft) {
+    this.location = location;
+    this.velocity = velocity;
     this.hitsLeft = hitsLeft;
   }
 
   // Draw each Asteroid to the screen at the appropriate size.
   void drawAsteroid(PShape shapes) {
     if (hitsLeft == 3) {
-      shape(shapes, xPos, yPos, largeAsteroid, largeAsteroid);
+      shape(shapes, location.x, location.y, largeAsteroid, largeAsteroid);
     } else if (hitsLeft == 2) {
-      shape(shapes, xPos, yPos, mediumAsteroid, mediumAsteroid);
+      shape(shapes, location.x, location.y, mediumAsteroid, mediumAsteroid);
     } else if (hitsLeft == 1) {
-      shape(shapes, xPos, yPos, smallAsteroid, smallAsteroid);
+      shape(shapes, location.x, location.y, smallAsteroid, smallAsteroid);
     }
   }
 
   // Handles asteroid movement and boundary checking.
   void move() {
-    xPos += xSpeed;
-    yPos += ySpeed;
-    if (xPos > width) {
-      xPos = 0;
-    } else if (xPos < 0) {
-      xPos = width;
+    location.add(velocity);    
+    if (location.x > width) {
+      location.x = 0;
+    } else if (location.x < 0) {
+      location.x = width;
     }
-    if (yPos > height) {
-      yPos = 0;
-    } else if (yPos < 0) {
-      yPos = height;
+    if (location.y > height) {
+      location.y = 0;
+    } else if (location.y < 0) {
+      location.y = height;
     }
   }
 
   // Returns x coordinate of Asteroid.
   float xPos() {
-    return(xPos);
+    return location.x;
   }
 
   // Returns y coordinate of Asteroid.
   float yPos() {
-    return(yPos);
+    return location.y;
   }
 
   // Subtracts a point from the asteroids life.
@@ -450,8 +441,8 @@ void detectCollisions() {
         // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
         asteroids.remove(i);
         if (asteroid.hits() >0) {
-          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
-          asteroids.add(new Asteroid(asteroid.xPos(), asteroid.yPos(), asteroid.hits(), random(-2, 2), random(-2, 2)));
+          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits()));
+          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits()));
         }
       }
     }
