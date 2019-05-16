@@ -16,17 +16,21 @@ PShape spaceship;//consider changing to image
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
 Ship ship;//ship object
 // Maximum number of largest asteroids on screen... Can tie to level.
-int numberAsteroids = 5;
+int numberAsteroids = 3;
 // Asteroid hitpoints.
 int asteroidLife = 3;
+// Length of the shapes array
 int shapeLength = numberAsteroids * 3;
 PShape[] shapes = new PShape[shapeLength];
+//  0 = Start screen, 1 = gameplay, 2 = Game Over screen.
+int gameScreen = 0;
 //configuration setting
-float bulletMaxDistance = 500;
+float bulletMaxDistance = 250;
 
 void setup() {
   frameRate(60);
   size(800, 800);
+  background(0);
   ship = new Ship();
   smooth(); 
   // Generate an array of random asteroid shapes.
@@ -45,20 +49,14 @@ void setup() {
 
 void draw() {
 
-  background(0);// Set to black as per the original game.
-  // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
-  for (int i = asteroids.size()-1; i >= 0; i--) { 
-    Asteroid asteroid = asteroids.get(i);
-    asteroid.move();
-    asteroid.drawAsteroid(shapes[i]);
+if (gameScreen == 0) {
+    initScreen();
+  } else if (gameScreen == 1) {
+    gameScreen();
+  } else if (gameScreen == 2) {
+    gameOverScreen();
   }
-  detectCollisions();
-  ship.updatePos();
-  ship.edgeCheck();
-  ship.display();
-  updateAndDrawProjectiles();
 }
-
 
 //TO BE MODIFIED ONCE EDGE OF MAP DETECTION FUNCTION IS REFACTORED.
 /*
@@ -306,25 +304,21 @@ class Asteroid {
 
   // Returns x coordinate of Asteroid.
   float xPos() {
-
     return(xPos);
   }
 
   // Returns y coordinate of Asteroid.
   float yPos() {
-
     return(yPos);
   }
 
   // Subtracts a point from the asteroids life.
   void hitsLeft() {
-
     hitsLeft--;
   }
 
   // returns current number of hits asteroid can sustain.
   int hits() {
-
     return hitsLeft;
   }
 }
@@ -388,7 +382,9 @@ void detectCollisions() {
     Asteroid asteroid = asteroids.get(i);  
     // Check to see if the player's ship is hit first - game over
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.radius)) {
-      //println("Game over");
+      println("Game over");
+      gameOver();
+      setup();
     }
 
     for (int j=projectiles.size()-1; j >= 0; j--) {
@@ -411,7 +407,77 @@ void detectCollisions() {
   }
 }
 
+void initScreen() {
+
+  textSize(100);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  text("Asteroids", width/2, 150); 
+  textSize(50);
+  fill(0, 102, 153);
+  textAlign(CENTER);
+  text("Press any key to start game.", width/2, 450); 
+  textSize(25);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  text("W, A, S, D keys for movement, L/SPACEBAR to shoot.", width/2, 750);
+}
+
+void gameOverScreen() {
+
+  textSize(100);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  text("Game Over", width/2, 150); 
+  textSize(25);
+  fill(0, 102, 153);
+  textAlign(CENTER);
+  text("Click mouse to start a new game.", width/2, 450);
+}
+
+void startGame(){
+  gameScreen = 1;
+}
+
+void gameOver(){
+  
+  gameScreen = 2;
+}
+
+void restart(){
+  
+  gameScreen = 0;
+}
+  
+void gameScreen(){
+    background(0);// Set to black as per the original game.
+    // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
+    for (int i = asteroids.size()-1; i >= 0; i--) { 
+      Asteroid asteroid = asteroids.get(i);
+      asteroid.move();
+      asteroid.drawAsteroid(shapes[i]);
+    }
+    detectCollisions();
+    ship.updatePos();
+    ship.edgeCheck();
+    ship.display();
+    updateAndDrawProjectiles();
+}
+
+void mousePressed() {
+  // if we are on the initial screen when clicked, start the game 
+  if (gameScreen == 0) { 
+    gameScreen = 1;
+  }
+  if (gameScreen == 2) {
+    gameScreen = 1;
+  }
+}
+
 void keyPressed() {
+  if (gameScreen == 0) { 
+    gameScreen = 1;
+  }
   //added arrow keys for movement
   if (key== 'w'|| keyCode==UP) {
     sUP=true;
