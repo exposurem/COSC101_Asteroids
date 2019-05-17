@@ -154,7 +154,7 @@ class Ship {
     resistance=0.99;//lower = more resistance
     mass = 1;
     turnFactor =6;//turning tightness
-    maxSpeed = 10;
+    maxSpeed = 9;
     radius =25;//size of ship and collision detection radius
     thrustFactor=0.15;//propelling
     
@@ -263,7 +263,7 @@ class Ship {
   void shoot() {
     //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
     shootSound.play();
-    projectiles.add(new Projectile(direction, noseLocation,6, bulletMaxDistance,velocity.mag()));
+    projectiles.add(new Projectile(direction, noseLocation,6, bulletMaxDistance,velocity.mag(),heading));
   }
 }
 // Fill random shapes array.
@@ -369,8 +369,9 @@ class Projectile {
   boolean visible;
   float radius;
   float magnitude;
+  float heading;
 
-  Projectile(PVector shipDirection, PVector shipLocation,int speed, float maxDistance, float mag) {
+  Projectile(PVector shipDirection, PVector shipLocation,int speed, float maxDistance, float mag,float heading) {
     this.speed = speed;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
@@ -380,13 +381,16 @@ class Projectile {
     this.distanceTravelled = 0;
     this.velocity = new PVector();
     this.magnitude = mag;
+    this.heading = heading;
   }
 
 
   //Update position of projectile
   void move() {
+    PVector tempDir = new PVector(cos(heading)*speed,sin(heading)*speed);
+   
     velocity.setMag(magnitude);//should be dynamic, won't exceed ship.maxSpeed
-    velocity.add(direction);//add's a constant of bullet speed
+    velocity.add(tempDir);//add's a constant of bullet speed
     blocation.add(velocity);//ship still: (speed + 0), moving: (speed+current mag)
     distanceTravelled +=velocity.mag();
   }
