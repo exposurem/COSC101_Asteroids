@@ -32,7 +32,7 @@ PShape[] shapes = new PShape[shapeLength];
 //  0 = Start screen, 1 = gameplay, 2 = Game Over screen.
 int gameScreen = 0;
 //configuration setting
-float bulletMaxDistance = 200;
+float bulletMaxDistance;
 SoundFile explosionSound;
 SoundFile shootSound;
 
@@ -61,6 +61,7 @@ void setup() {
   }
 
   projectiles = new ArrayList<Projectile>();
+  bulletMaxDistance = height;//move to settings class when made
 }
 
 void draw() {
@@ -145,12 +146,12 @@ class Ship {
   Ship() {
     //controls speed, amount of rotation and scale of ship, feel free to change
     //down to thrustFact can all be modified in our settings class once that's made
-    resistance=0.995;//lower = more resistance
+    resistance=0.99;//lower = more resistance
     mass = 1;
     turnFactor =6;//turning tightness
-    maxSpeed = 6;
+    maxSpeed = 10;
     radius =25;//size of ship and collision detection radius
-    thrustFactor=0.125;//propelling
+    thrustFactor=0.15;//propelling
     
     xPos = width/2.0; 
     yPos = height/2.0;
@@ -257,7 +258,7 @@ class Ship {
   void shoot() {
     //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
     shootSound.play();
-    projectiles.add(new Projectile(direction, noseLocation,6, bulletMaxDistance));
+    projectiles.add(new Projectile(direction, noseLocation,6, bulletMaxDistance,velocity.mag()));
   }
 }
 
@@ -335,13 +336,14 @@ class Asteroid {
 //Change hardcoded radius, solve and clean up class once issue it fixed.
 //Normal speed = 6, level 2 = 5, level >=3 = 4.
 class Projectile {
-  PVector blocation = new PVector(), direction = new PVector();
+  PVector blocation = new PVector(), direction = new PVector(), velocity;
   float  distanceTravelled, maxDistance;
   int speed;
   boolean visible;
   float radius;
+  float magnitude;
 
-  Projectile(PVector shipDirection, PVector shipLocation,int speed, float maxDistance) {
+  Projectile(PVector shipDirection, PVector shipLocation,int speed, float maxDistance, float mag) {
     this.speed = speed;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
@@ -349,13 +351,17 @@ class Projectile {
     this.radius = 5;
     this.maxDistance = maxDistance;
     this.distanceTravelled = 0;
+    this.velocity = new PVector();
+    this.magnitude = mag;
   }
 
 
   //Update position of projectile
   void move() {
-    distanceTravelled += 1;
-    blocation.add(direction);
+    velocity.setMag(magnitude);//should be dynamic, won't exceed ship.maxSpeed
+    velocity.add(direction);//add's a constant of bullet speed
+    blocation.add(velocity);//ship still: (speed + 0), moving: (speed+current mag)
+    distanceTravelled +=velocity.mag();
   }
 
   void display() {
