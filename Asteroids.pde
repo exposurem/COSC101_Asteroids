@@ -433,6 +433,7 @@ void detectCollisions() {
       println("Game over");
       gameOver();
       setup();
+      i=numberAsteroids-1;
     }
 
     for (int j=projectiles.size()-1; j >= 0; j--) {
