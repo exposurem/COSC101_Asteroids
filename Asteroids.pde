@@ -27,7 +27,7 @@ int numberAsteroids = 3;
 // Asteroid hitpoints.
 int asteroidLife = 3;
 // Length of the shapes array
-int shapeLength = numberAsteroids * 5;
+int shapeLength = 10;
 PShape[] shapes = new PShape[shapeLength];
 //  0 = Start screen, 1 = gameplay, 2 = Game Over screen.
 int gameScreen = 0;
@@ -57,7 +57,7 @@ void setup() {
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
   for (int i = 0; i < numberAsteroids; i++) { 
-    asteroids.add(new Asteroid(new PVector(random(random(0, 100)), random(width-100, width), random(height)), (new PVector(random(-2, 2), random(-2, 2))), asteroidLife));
+    asteroids.add(new Asteroid(new PVector(random(random(0, 100)), random(width-100, width), random(height)), (new PVector(random(-2, 2), random(-2, 2))), asteroidLife, chooseShape(shapeLength)));
   }
 
   projectiles = new ArrayList<Projectile>();
@@ -125,6 +125,14 @@ PVector mapEdgeWrap(PVector object, float radius) {
   }
   return object;
 }
+
+int chooseShape(int maxNumber){
+  int number = int(random(0,maxNumber));
+  
+  return number;
+  
+}
+  
 
 //feel free to modify this class structure or give advice.
 class Ship {
@@ -259,11 +267,13 @@ class Asteroid {
   //Number of times to hit.
   int hitsLeft;
   float radius = 50;
+  int shape;
   // Initialise.
-  Asteroid(PVector location, PVector velocity, int hitsLeft) {
+  Asteroid(PVector location, PVector velocity, int hitsLeft, int shape) {
     this.location = location;
     this.velocity = velocity;
     this.hitsLeft = hitsLeft;
+    this.shape = shape;
   }
 
   // Draw each Asteroid to the screen at the appropriate size.
@@ -448,8 +458,8 @@ void detectCollisions() {
         // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
         asteroids.remove(i);
         if (asteroid.hits() >0) {
-          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits()));
-          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits()));
+          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits(),chooseShape(shapeLength)));
+          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits(),chooseShape(shapeLength)));
         }
       }
     }
@@ -512,7 +522,7 @@ void gameScreen(){
     for (int i = asteroids.size()-1; i >= 0; i--) { 
       Asteroid asteroid = asteroids.get(i);
       asteroid.move();
-      asteroid.drawAsteroid(shapes[i]);
+      asteroid.drawAsteroid(shapes[asteroid.shape]);
     }
     aScoreBoard.drawMe();
     detectCollisions();
