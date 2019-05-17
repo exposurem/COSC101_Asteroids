@@ -21,6 +21,7 @@ PShape randomShape;
 PShape spaceship;//consider changing to image
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
 Ship ship;//ship object
+boolean paused;
 
 // Maximum number of largest asteroids on screen... Can tie to level.
 int numberAsteroids = 3;
@@ -396,6 +397,7 @@ class ScoreBoard {
   }
   
   void reset(){
+    paused = false;
     score = 0;
     
   }
@@ -438,7 +440,10 @@ void drawShapes() {
 
 //Detect collisions between Ship + Asteroids and asteroids + bullets.
 void detectCollisions() {
-  for (int i = asteroids.size()-1; i >= 0; i--) { 
+  for (int i = asteroids.size()-1; i >= 0; i--) {
+    if(paused){//shouldn't 
+       break;
+    } else{   
     Asteroid asteroid = asteroids.get(i);  
     noFill();
     stroke(255, 0, 0);
@@ -446,10 +451,10 @@ void detectCollisions() {
     ellipse(ship.xPos, ship.yPos, ship.radius, ship.radius);
     // Check to see if the player's ship is hit first - game over
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
+      paused = true; // cause loop to break
       println("Game over");
       gameOver();
       setup();
-      break;
     }
 
     for (int j=projectiles.size()-1; j >= 0; j--) {
@@ -466,12 +471,13 @@ void detectCollisions() {
         if (asteroid.hits() >0) {
           asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits(),chooseShape(shapeLength)));
           asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-2, 2), random(-2, 2))), asteroid.hits(),chooseShape(shapeLength)));
+          break;//
         }
       }
     }
   }
 }
-
+}
 void initScreen() {
   textSize(100);
   fill(255, 255, 255);
