@@ -117,13 +117,14 @@ void createAsteroid(int asteroidLife){
 }
 
 void splitAsteroid(Asteroid asteroid ){
-  PVector location = asteroid.location;
+  /*PVector location = asteroid.location;
   PVector velocityOne = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
   PVector velocityTwo = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
   int shapeOne = chooseShape(shapeLength);
   int shapeTwo = chooseShape(shapeLength);
-  asteroids.add(new Asteroid(location, velocityOne, asteroid.hitsLeft, shapeOne));
-  asteroids.add(new Asteroid(location, velocityTwo, asteroid.hitsLeft, shapeTwo));
+  */
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
 }
 
 
@@ -549,6 +550,7 @@ void gameScreen() {
 
 void levelScreen() {
   background(0);
+  aScoreBoard.drawMe();
   textSize(100);
   fill(255, 255, 255);
   textAlign(CENTER);
