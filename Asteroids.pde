@@ -60,7 +60,7 @@ void setup() {
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
   for (int i = 0; i < numberAsteroids; i++) { 
-    asteroids.add(new Asteroid(new PVector(random(random(0, 100)), random(width-100, width), random(height)), (new PVector(random(-2, 2), random(-2, 2))), asteroidLife, chooseShape(shapeLength)));
+    createAsteroid(asteroidLife);
   }
 
   projectiles = new ArrayList<Projectile>();
@@ -78,6 +78,10 @@ void draw() {
     levelScreen();
   } else if (gameScreen == 3) {
     gameOverScreen();
+  }
+    else if (gameScreen == 4) {
+    gamePauseScreen(); 
+    
   }
 }
 
@@ -102,6 +106,24 @@ void updateAndDrawProjectiles() {
       bullet.display();
     }
   }
+}
+
+void createAsteroid(int asteroidLife){
+  PVector location = new PVector(random(random(0, 100)), random(width-100, width), random(height));
+  PVector velocity = new PVector(random(-2, 2), random(-2, 2));
+  int shape = chooseShape(shapeLength);
+  asteroids.add(new Asteroid(location, velocity, asteroidLife, shape));
+  
+}
+
+void splitAsteroid(Asteroid asteroid ){
+  PVector location = asteroid.location;
+  PVector velocityOne = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
+  PVector velocityTwo = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
+  int shapeOne = chooseShape(shapeLength);
+  int shapeTwo = chooseShape(shapeLength);
+  asteroids.add(new Asteroid(location, velocityOne, asteroid.hitsLeft, shapeOne));
+  asteroids.add(new Asteroid(location, velocityTwo, asteroid.hitsLeft, shapeTwo));
 }
 
 
@@ -454,23 +476,37 @@ void detectCollisions() {
       noFill();
       stroke(255, 0, 0);
       if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
-        explosionSound.play();
-        projectiles.remove(j);
-        aScoreBoard.update(asteroid.hitsLeft);
-        asteroid.hitsLeft();
-        // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
-        asteroids.remove(i);
-        // Check if asteroids have all been destroyed.
-        killCount();
+        //Call functions and perform actions to handle the collision event
+        handleAsteroidCollision(asteroid, i, j);
+        //Check if all of the asteroids have been destroyed.
+        if (killCount == numberAsteroids*7) {
+          levelUp();
+          nextLevel();
+          killCount = 0;
+
+          break;
+        }
+        //Split into new asteroids
         if (asteroid.hits() >0) {
-          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
-          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+          splitAsteroid(asteroid);
           break;
         }
       }
     }
   }
 }
+
+void handleAsteroidCollision(Asteroid asteroid,int asteroidId, int projectileId){
+  explosionSound.play();
+  aScoreBoard.update(asteroid.hitsLeft);
+  projectiles.remove(projectileId);
+  asteroid.hitsLeft();
+  killCount++;
+  asteroids.remove(asteroidId);
+  
+}
+
+
 
 
 // Display the introduction screen.
@@ -538,13 +574,26 @@ void gameOverScreen() {
   numberAsteroids = level;
 }
 
+void gamePauseScreen() {
+  background(0);
+  textSize(100);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  text("Game Paused", width/2, 150); 
+  textSize(25);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  text("Hit P to resume.", width/2, 450);
+
+}
+
 void nextLevel() {
 
   level++;
   asteroidSpeed+= 0.5;
   numberAsteroids = level;
   for (int i = 0; i < numberAsteroids; i++) { 
-    asteroids.add(new Asteroid(new PVector(random(random(0, 100)), random(width-100, width), random(height)), (new PVector(random(-2, 2), random(-2, 2))), asteroidLife, chooseShape(shapeLength)));
+    createAsteroid(asteroidLife);
   }
 }
 
@@ -554,17 +603,20 @@ void startGame() {
 }
 
 void levelUp() {
+  resetArrayLists();
   gameScreen = 2;
 }
 
 void gameOver() {
+  resetArrayLists();
   gameScreen = 3;
 }
 
 void restart() {
+  resetArrayLists();
   gameScreen = 0;
 }
-
+//Modified and placed inside detection loop.
 void killCount() {
   killCount++;
   if (killCount == numberAsteroids*7) {
@@ -572,6 +624,12 @@ void killCount() {
     killCount = 0;
     levelUp();
   }
+}
+
+void resetArrayLists(){
+  projectiles.clear();
+  asteroids.clear();
+  
 }
 
 void mousePressed() {
@@ -590,8 +648,8 @@ void mousePressed() {
 void keyPressed() {
 
   if (key == 'p' && gameScreen == 1) {
-    gameScreen = 3;
-  } else if (key == 'p' && gameScreen == 3) {
+    gameScreen = 4;
+  } else if (key == 'p' && gameScreen == 4) {
     gameScreen = 1;
   }
   //added arrow keys for movement
@@ -622,7 +680,7 @@ void keyReleased() {
   if (key=='a'||keyCode==LEFT) {
     sLEFT=false;
   }
-  if (key=='l'||key==' ') {//added spacebar for shooting
+  if (key=='l'||key==' ' && gameScreen != 2) {//added spacebar for shooting
     sSHOOT=true;
   }
 }
