@@ -489,7 +489,6 @@ void detectCollisions() {
           levelUp();
           nextLevel();
           killCount = 0;
-
           break;
         }
         //Split into new asteroids
@@ -511,9 +510,6 @@ void handleAsteroidCollision(Asteroid asteroid,int asteroidId, int projectileId)
   asteroids.remove(asteroidId);
   
 }
-
-
-
 
 // Display the introduction screen.
 void initScreen() {
@@ -595,7 +591,7 @@ void gamePauseScreen() {
 }
 
 void nextLevel() {
-
+  resetArrayLists();
   level++;
   asteroidSpeed+= 0.5;
   numberAsteroids = level;
@@ -610,12 +606,10 @@ void startGame() {
 }
 
 void levelUp() {
-  resetArrayLists();
   gameScreen = 2;
 }
 
 void gameOver() {
-  resetArrayLists();
   gameScreen = 3;
 }
 
@@ -623,20 +617,23 @@ void restart() {
   resetArrayLists();
   gameScreen = 0;
 }
-//Modified and placed inside detection loop.
-void killCount() {
-  killCount++;
-  if (killCount == numberAsteroids*7) {
-    nextLevel();
-    killCount = 0;
-    levelUp();
-  }
-}
 
 void resetArrayLists(){
   projectiles.clear();
   asteroids.clear();
-  
+}
+
+void resetConditions(){
+  resetArrayLists();
+  ship = new Ship();  
+  // Initialize the ArrayList.
+  asteroids = new ArrayList<Asteroid>();
+  for (int i = 0; i < numberAsteroids; i++) { 
+    createAsteroid(asteroidLife);
+  }
+  killCount = 0;
+  projectiles = new ArrayList<Projectile>();
+  background(0);
 }
 
 void mousePressed() {
@@ -646,7 +643,7 @@ void mousePressed() {
   } else if (gameScreen == 2) {
     gameScreen = 1;
   } else if (gameScreen == 3) { 
-    setup();
+    resetConditions();
     aScoreBoard.reset();
     gameScreen = 2;
   }
