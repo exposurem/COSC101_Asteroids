@@ -3,7 +3,7 @@
  * Group: Group 29
  * Date: 06/05/2019
  * Course: COSC101 - Software Development Studio 1
- * Desc: Astroids game
+ * Desc: Asteroids game
  * Usage: Make sure to run in the processing environment, have the sound library installed and press play etc...
  *
  Resource Credits
@@ -13,30 +13,36 @@
  */
 
 import processing.sound.*;
-//Array to store the asteroid objects
-ArrayList<Asteroid> asteroids;
-ArrayList<Projectile> projectiles;
-// Random asteroids.
 PShape randomShape;
-PShape spaceship;//consider changing to image
-boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;//control key direction
-Ship ship;//ship object
+PShape spaceship;
+//control key direction
+boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
+// For the pause screen.
 boolean paused;
+// Maximum number of largest asteroids on screen
+int numberAsteroids = 1;
+// Game level.
 int level = 1;
 // Number of asteroids destroyed.
 int killCount = 0;
-// Maximum number of largest asteroids on screen... Can tie to level.
-float asteroidSpeed = 1;
-int numberAsteroids = 1;
 // Asteroid hitpoints.
 int asteroidLife = 3;
 // Length of the shapes array
 int shapeLength = 10;
-PShape[] shapes = new PShape[shapeLength];
-//  0 = Start screen, 1 = gameplay, 2 = Game Over screen.
+// 0 = Start screen, 1 = gameplay, 2 = level, 3 = game over.
 int gameScreen = 0;
-//configuration setting
+// Speed setting for asteroids.
+float asteroidSpeed = 1; 
+// Distance bullets travel before being removed.
 float bulletMaxDistance;
+// 0 = Start screen, 1 = gameplay, 2 = level, 3 = game over.
+ArrayList<Asteroid> asteroids;
+//ArrayList to store the projectile objects.
+ArrayList<Projectile> projectiles;
+// Array of randomly generated shapes.
+PShape[] shapes = new PShape[shapeLength];
+//ship object
+Ship ship;
 SoundFile explosionSound;
 SoundFile shootSound;
 
@@ -78,8 +84,7 @@ void draw() {
     levelScreen();
   } else if (gameScreen == 3) {
     gameOverScreen();
-  }
-    else if (gameScreen == 4) {
+  } else if (gameScreen == 4) {
     gamePauseScreen(); 
     
   }
