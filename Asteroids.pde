@@ -30,6 +30,8 @@ int asteroidLife = 3;
 int shapeLength = 10;
 // 0 = Start screen, 1 = gameplay, 2 = level, 3 = game over.
 int gameScreen = 0;
+// Number of ships remaining.
+int playerLives = 3;
 // Speed setting for asteroids.
 float asteroidSpeed = 1; 
 // Distance bullets travel before being removed.
@@ -91,6 +93,8 @@ void draw() {
     gameOverScreen();
   } else if (gameScreen == 4) {
     gamePauseScreen();
+  } else if (gameScreen == 5) {
+    deathScreen();
   }
 }
 
@@ -125,12 +129,6 @@ void createAsteroid(int asteroidLife) {
 }
 
 void splitAsteroid(Asteroid asteroid ) {
-  /*PVector location = asteroid.location;
-   PVector velocityOne = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
-   PVector velocityTwo = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
-   int shapeOne = chooseShape(shapeLength);
-   int shapeTwo = chooseShape(shapeLength);
-   */
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
 }
@@ -485,7 +483,7 @@ void detectCollisions() {
     stroke(255, 0, 0);
     // Check to see if the player's ship is hit first - game over
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
-      gameOver();
+      lifeEnd();
       break;
     }
 
@@ -552,6 +550,7 @@ void gameScreen() {
     asteroid.drawAsteroid(shapes[asteroid.shape]);
   }
   aScoreBoard.drawMe();
+  livesDisplay();
   detectCollisions();
   ship.updatePos();
   ship.edgeCheck();
@@ -561,6 +560,7 @@ void gameScreen() {
 
 void levelScreen() {
   background(0);
+  livesDisplay();
   aScoreBoard.drawMe();
   textSize(100);
   fill(255, 255, 255);
@@ -599,6 +599,25 @@ void gamePauseScreen() {
   text("Hit P to resume.", width/2, 450);
 }
 
+void deathScreen(){
+  background(0);
+  textSize(40);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  if (playerLives == 1){
+  text("Ouch, you died. " +"\n" + playerLives + " life remaining.", width/2, height/2); 
+  } else {
+    text("Ouch, you died. " +"\n" + playerLives + " lives remaining.", width/2, height/2); 
+  }
+  resetArrayLists();
+  killCount = 0;
+  ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
+  numberAsteroids = level;
+  for (int i = 0; i < numberAsteroids; i++) { 
+    createAsteroid(asteroidLife);
+  }
+}
+
 void nextLevel() {
   //experiment with these figures
   shipFriction -=0.001; //lower = more
@@ -633,6 +652,10 @@ void restart() {
   gameScreen = 0;
 }
 
+void death(){
+  gameScreen = 5;
+}
+
 void resetArrayLists() {
   projectiles.clear();
   asteroids.clear();
@@ -649,8 +672,40 @@ void resetConditions() {
   }
   killCount = 0;
   asteroidSpeed = 1;
+  playerLives = 3;
   projectiles = new ArrayList<Projectile>();
   background(0);
+}
+
+void livesDisplay(){
+    noFill();
+    stroke(255);
+    randomShape = createShape();
+    randomShape.beginShape();
+    randomShape.vertex(0, -25);//top
+    randomShape.vertex(-25, 25);//bottom left
+    randomShape.vertex(0, 25/2.0);//bottom middle
+    randomShape.vertex(25, 25);//bottom right
+    randomShape.endShape(CLOSE);
+    if (playerLives == 3){
+    shape(randomShape, 50, 50);
+    shape(randomShape, 100, 50);
+    shape(randomShape, 150, 50);
+    } else if (playerLives == 2){
+      shape(randomShape, 50, 50);
+      shape(randomShape, 100, 50);
+      } else if (playerLives == 1){
+        shape(randomShape, 50, 50);        
+  }
+}
+
+void lifeEnd(){
+  if (playerLives > 0){
+    playerLives--;
+    death();
+  } else {
+    gameOver();
+  }
 }
 
 void mousePressed() {
@@ -662,6 +717,8 @@ void mousePressed() {
   } else if (gameScreen == 3) { 
     resetConditions();
     aScoreBoard.reset();
+    gameScreen = 2;
+  } else if (gameScreen == 5){
     gameScreen = 2;
   }
 }
