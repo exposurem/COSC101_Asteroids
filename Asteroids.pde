@@ -118,7 +118,6 @@ void createAsteroid(int asteroidLife){
   PVector velocity = new PVector(random(-2, 2), random(-2, 2));
   int shape = chooseShape(shapeLength);
   asteroids.add(new Asteroid(location, velocity, asteroidLife, shape));
-  
 }
 
 void splitAsteroid(Asteroid asteroid ){
@@ -131,7 +130,6 @@ void splitAsteroid(Asteroid asteroid ){
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
 }
-
 
 /*
 Function Purpose: To detect collisions between two objects using circle collision detection.
@@ -483,7 +481,7 @@ void detectCollisions() {
       stroke(255, 0, 0);
       if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
         //Call functions and perform actions to handle the collision event
-        handleAsteroidCollision(asteroid, i, j);
+          handleAsteroidCollision(asteroid, i, j);
         //Check if all of the asteroids have been destroyed.
         if (killCount == numberAsteroids*7) {
           levelUp();
@@ -507,8 +505,7 @@ void handleAsteroidCollision(Asteroid asteroid,int asteroidId, int projectileId)
   projectiles.remove(projectileId);
   asteroid.hitsLeft();
   killCount++;
-  asteroids.remove(asteroidId);
-  
+  asteroids.remove(asteroidId); 
 }
 
 // Display the introduction screen.
@@ -526,7 +523,6 @@ void initScreen() {
   textAlign(CENTER);
   text("W,A,S,D keys for movement, L/SPACEBAR to shoot, p to pause.", width/2, 750);
 }
-
 // Pause the game.
 void pauseScreen() {
   noLoop();
@@ -587,7 +583,6 @@ void gamePauseScreen() {
   fill(255, 255, 255);
   textAlign(CENTER);
   text("Hit P to resume.", width/2, 450);
-
 }
 
 void nextLevel() {
@@ -599,7 +594,6 @@ void nextLevel() {
     createAsteroid(asteroidLife);
   }
 }
-
 
 void startGame() {
   gameScreen = 1;
@@ -632,6 +626,7 @@ void resetConditions(){
     createAsteroid(asteroidLife);
   }
   killCount = 0;
+  asteroidSpeed = 1;
   projectiles = new ArrayList<Projectile>();
   background(0);
 }
