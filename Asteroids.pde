@@ -6,10 +6,10 @@
  * Desc: Astroids game
  * Usage: Make sure to run in the processing environment, have the sound library installed and press play etc...
  *
-      Resource Credits
-      Asteroid explosion - https://freesound.org/people/runningmind/sounds/387857/ 
-      Shooting sound - https://freesound.org/people/alphatrooper18/sounds/362420/
-                      
+ Resource Credits
+ Asteroid explosion - https://freesound.org/people/runningmind/sounds/387857/ 
+ Shooting sound - https://freesound.org/people/alphatrooper18/sounds/362420/
+ 
  */
 
 import processing.sound.*;
@@ -43,7 +43,7 @@ SoundFile shootSound;
 //Setting up outside of the setup() due to call from gameover. May need to split up things that
 //need to be reset between games in another function, and leave setup for the things that are done once.
 
-ScoreBoard aScoreBoard = new ScoreBoard(400,20); //score board object
+ScoreBoard aScoreBoard = new ScoreBoard(400, 20); //score board object
 
 void setup() {
   frameRate(60);
@@ -70,11 +70,11 @@ void setup() {
 
 void draw() {
 
-if (gameScreen == 0) {
+  if (gameScreen == 0) {
     initScreen();
   } else if (gameScreen == 1) {
     gameScreen();
-    } else if (gameScreen == 2) {
+  } else if (gameScreen == 2) {
     levelScreen();
   } else if (gameScreen == 3) {
     gameOverScreen();
@@ -133,11 +133,10 @@ PVector mapEdgeWrap(PVector object, float radius) {
   return object;
 }
 
-int chooseShape(int maxNumber){
-  int number = int(random(0,maxNumber));
-  
+int chooseShape(int maxNumber) {
+  int number = int(random(0, maxNumber));
+
   return number;
-  
 }
 
 //feel free to modify this class structure or give advice.
@@ -146,7 +145,7 @@ class Ship {
   PVector location, direction, noseLocation, acceleration, velocity;
   float xPos, yPos, noseX, noseY, radius; 
   float turnFactor, heading; 
-  float resistance, mass, thrustFactor,maxSpeed;
+  float resistance, mass, thrustFactor, maxSpeed;
 
   Ship() {
     //controls speed, amount of rotation and scale of ship, feel free to change
@@ -157,7 +156,7 @@ class Ship {
     maxSpeed = 9;
     radius =25;//size of ship and collision detection radius
     thrustFactor=0.15;//propelling
-    
+
     xPos = width/2.0; 
     yPos = height/2.0;
     //initialise vectors
@@ -171,7 +170,7 @@ class Ship {
     xPos=location.x;
     yPos=location.y;
     heading = direction.heading();
-    
+
     velocity.add(acceleration);
     velocity.mult(resistance);
     velocity.limit(maxSpeed);
@@ -195,7 +194,7 @@ class Ship {
       sSHOOT = false;
     }
   }
-  
+
   void display() {
     pushMatrix();
     translate(location.x, location.y);
@@ -213,7 +212,7 @@ class Ship {
     //ellipse(noseLocation.x,noseLocation.y,5,5);//ship nose location
     //ellipse(location.x, location.y, 5, 5);//ship center of rotation
   }
-  
+
   void drawShip() {
     stroke(255);
     beginShape();
@@ -223,7 +222,7 @@ class Ship {
     vertex(radius, radius);//bottom right
     endShape(CLOSE);
   }
-  
+
   void drawExhaust() {
     //strokeWeight(3);
     stroke(255); //flame colour
@@ -234,9 +233,9 @@ class Ship {
     vertex(radius/2.0, radius*0.75);
     endShape(CLOSE);
   }
-  
+
   void propel() {
-    PVector thrust = new PVector(cos(heading),sin(heading));
+    PVector thrust = new PVector(cos(heading), sin(heading));
     if (sUP) {
       thrust.setMag(thrustFactor);//accelerate
     }
@@ -246,7 +245,7 @@ class Ship {
     acceleration.div(mass);
     acceleration.add(thrust);
   }
-  
+
   void edgeCheck() {
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
@@ -258,12 +257,12 @@ class Ship {
     vector.x = vector.mag() * cos(heading);
     vector.y = vector.mag() * sin(heading);
   }
-  
+
   //Adds a new projectile
   void shoot() {
     //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
     shootSound.play();
-    projectiles.add(new Projectile(direction, noseLocation,6, bulletMaxDistance,velocity.mag(),heading));
+    projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag(), heading));
   }
 }
 // Fill random shapes array.
@@ -275,16 +274,16 @@ void drawShapes() {
     randomShape = createShape();
     randomShape.beginShape();
     randomShape.vertex(50, 50);
-    randomShape.vertex(random(40, 60),  random(0, 20));
-    randomShape.vertex(random(80, 100),  random(5, 25));
+    randomShape.vertex(random(40, 60), random(0, 20));
+    randomShape.vertex(random(80, 100), random(5, 25));
     randomShape.vertex(random(70, 90), random(30, 40));
-    randomShape.vertex(random(90, 110),  random(25, 45));
-    randomShape.vertex(random(70, 90),  random(70, 90));
+    randomShape.vertex(random(90, 110), random(25, 45));
+    randomShape.vertex(random(70, 90), random(70, 90));
     randomShape.vertex(random(50, 50), random(65, 75));
-    randomShape.vertex(random(15, 25),  random(70, 90));
-    randomShape.vertex(random(20, 40),  random(40, 60));
-    randomShape.vertex(random(0, 20),  random(30, 40));
-    randomShape.vertex(random(15, 35),  random(5, 25));
+    randomShape.vertex(random(15, 25), random(70, 90));
+    randomShape.vertex(random(20, 40), random(40, 60));
+    randomShape.vertex(random(0, 20), random(30, 40));
+    randomShape.vertex(random(15, 35), random(5, 25));
     randomShape.endShape(CLOSE);
     shapes[i] = randomShape;
   }
@@ -345,11 +344,11 @@ class Asteroid {
   void hitsLeft() {
     hitsLeft--;
   }
-  
-  float aRadius(){
-    if (hitsLeft == 3){
+
+  float aRadius() {
+    if (hitsLeft == 3) {
       return (radius*3)/2;
-    } else if (hitsLeft == 2){
+    } else if (hitsLeft == 2) {
       return (radius*2)/2;
     } else return radius/2;
   }
@@ -371,7 +370,7 @@ class Projectile {
   float magnitude;
   float heading;
 
-  Projectile(PVector shipDirection, PVector shipLocation,int speed, float maxDistance, float mag,float heading) {
+  Projectile(PVector shipDirection, PVector shipLocation, int speed, float maxDistance, float mag, float heading) {
     this.speed = speed;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
@@ -387,8 +386,8 @@ class Projectile {
 
   //Update position of projectile
   void move() {
-    PVector tempDir = new PVector(cos(heading)*speed,sin(heading)*speed);
-   
+    PVector tempDir = new PVector(cos(heading)*speed, sin(heading)*speed);
+
     velocity.setMag(magnitude);//should be dynamic, won't exceed ship.maxSpeed
     velocity.add(tempDir);//add's a constant of bullet speed
     blocation.add(velocity);//ship still: (speed + 0), moving: (speed+current mag)
@@ -405,55 +404,49 @@ class ScoreBoard {
   int score;
   float xPos;
   float yPos;
-  
-  ScoreBoard(float xPos, float yPos){
-   this.score = 0; 
-   this.xPos = xPos;
-   this.yPos = yPos;
+
+  ScoreBoard(float xPos, float yPos) {
+    this.score = 0; 
+    this.xPos = xPos;
+    this.yPos = yPos;
   }
   //Method to update the score, largest asteroid worth the least, smallest the most. Based off hits left attribute.
-  void update(int hitsLeft){
-    switch(hitsLeft){
-      case 1:
+  void update(int hitsLeft) {
+    switch(hitsLeft) {
+    case 1:
       score += 300;
       break;
-      case 2:
+    case 2:
       score += 180;
       break;
-      case 3: 
+    case 3: 
       score += 100;
       break;
     }
   }
-  
-  void reset(){
-    paused = false;
+
+  void reset() {
     score = 0;
-    
   }
-  
-  void drawMe(){
+
+  void drawMe() {
     textSize(20);
     fill(255, 255, 255);
     textAlign(CENTER);
-    text("Score: " + aScoreBoard.score , aScoreBoard.xPos, aScoreBoard.yPos);
-    
+    text("Score: " + aScoreBoard.score, aScoreBoard.xPos, aScoreBoard.yPos);
   }
 }
 
 //Detect collisions between Ship + Asteroids and asteroids + bullets.
 void detectCollisions() {
   for (int i = asteroids.size()-1; i >= 0; i--) {
-    if(paused){//shouldn't 
-       break;
-    } else{   
     Asteroid asteroid = asteroids.get(i);
     noFill();
     stroke(255, 0, 0);
     // Check to see if the player's ship is hit first - game over
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
-      paused = true; // cause loop to break
       gameOver();
+      break;
     }
 
     for (int j=projectiles.size()-1; j >= 0; j--) {
@@ -468,17 +461,17 @@ void detectCollisions() {
         // When collision occurs, kill the old asteroid and create 2 new ones at a smaller size.
         asteroids.remove(i);
         // Check if asteroids have all been destroyed.
-        killCount();            
+        killCount();
         if (asteroid.hits() >0) {
-          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
-          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
+          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+          asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
           break;
         }
       }
     }
   }
 }
-}
+
 
 // Display the introduction screen.
 void initScreen() {
@@ -493,39 +486,37 @@ void initScreen() {
   textSize(25);
   fill(255, 255, 255);
   textAlign(CENTER);
-  text("W,A,S,D keys for movement, L/SPACEBAR to shoot, p to pause." , width/2, 750);
-
+  text("W,A,S,D keys for movement, L/SPACEBAR to shoot, p to pause.", width/2, 750);
 }
 
 // Pause the game.
-void pauseScreen(){
+void pauseScreen() {
   noLoop();
 }
-  
+
 // Gameplay.
-void gameScreen(){
-    background(0);// Set to black as per the original game.
-    // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
-    for (int i = asteroids.size()-1; i >= 0; i--) { 
-      Asteroid asteroid = asteroids.get(i);
-      asteroid.move();
-      asteroid.drawAsteroid(shapes[asteroid.shape]);
-    }
-    aScoreBoard.drawMe();
-    detectCollisions();
-    ship.updatePos();
-    ship.edgeCheck();
-    ship.display();
-    updateAndDrawProjectiles();
+void gameScreen() {
+  background(0);// Set to black as per the original game.
+  // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
+  for (int i = asteroids.size()-1; i >= 0; i--) { 
+    Asteroid asteroid = asteroids.get(i);
+    asteroid.move();
+    asteroid.drawAsteroid(shapes[asteroid.shape]);
+  }
+  aScoreBoard.drawMe();
+  detectCollisions();
+  ship.updatePos();
+  ship.edgeCheck();
+  ship.display();
+  updateAndDrawProjectiles();
 }
 
-void levelScreen(){
+void levelScreen() {
   background(0);
   textSize(100);
   fill(255, 255, 255);
   textAlign(CENTER);
   text(("Level - " + level), width/2, height/2);
-  
 }
 
 // Displays the game over screen.
@@ -547,8 +538,8 @@ void gameOverScreen() {
   numberAsteroids = level;
 }
 
-void nextLevel(){
- 
+void nextLevel() {
+
   level++;
   asteroidSpeed+= 0.5;
   numberAsteroids = level;
@@ -556,41 +547,40 @@ void nextLevel(){
     asteroids.add(new Asteroid(new PVector(random(random(0, 100)), random(width-100, width), random(height)), (new PVector(random(-2, 2), random(-2, 2))), asteroidLife, chooseShape(shapeLength)));
   }
 }
-  
 
-void startGame(){
+
+void startGame() {
   gameScreen = 1;
 }
 
-void levelUp(){
+void levelUp() {
   gameScreen = 2;
 }
 
-void gameOver(){
+void gameOver() {
   gameScreen = 3;
 }
 
-void restart(){
+void restart() {
   gameScreen = 0;
 }
 
-void killCount(){
-    killCount++;
-    if (killCount == numberAsteroids*7){
-      nextLevel();
-      killCount = 0;
-      levelUp();
-      
-    }
+void killCount() {
+  killCount++;
+  if (killCount == numberAsteroids*7) {
+    nextLevel();
+    killCount = 0;
+    levelUp();
+  }
 }
 
 void mousePressed() {
   // if we are on the initial screen when clicked, start the game 
   if (gameScreen == 0) { 
     gameScreen = 2;
-  } else if (gameScreen == 2){
+  } else if (gameScreen == 2) {
     gameScreen = 1;
-  } else if (gameScreen == 3){ 
+  } else if (gameScreen == 3) { 
     setup();
     aScoreBoard.reset();
     gameScreen = 2;
@@ -598,11 +588,11 @@ void mousePressed() {
 }
 
 void keyPressed() {
-  
+
   if (key == 'p' && gameScreen == 1) {
     gameScreen = 3;
-  } else if (key == 'p' && gameScreen == 3){
-  gameScreen = 1;
+  } else if (key == 'p' && gameScreen == 3) {
+    gameScreen = 1;
   }
   //added arrow keys for movement
   if (key== 'w'|| keyCode==UP) {
