@@ -14,7 +14,6 @@
 
 import processing.sound.*;
 PShape randomShape;
-PShape spaceship;
 //control key direction
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
 // For the pause screen.
@@ -35,7 +34,12 @@ int gameScreen = 0;
 float asteroidSpeed = 1; 
 // Distance bullets travel before being removed.
 float bulletMaxDistance;
-// 0 = Start screen, 1 = gameplay, 2 = level, 3 = game over.
+float shipFriction; //resistance
+float shipThrustFact;// initial thrust
+float shipMaxSpd; //top speed
+float shipSize; //ship radius
+float shipTurnArc =6;
+float shipMass = 1;
 ArrayList<Asteroid> asteroids;
 //ArrayList to store the projectile objects.
 ArrayList<Projectile> projectiles;
@@ -54,7 +58,8 @@ ScoreBoard aScoreBoard = new ScoreBoard(400, 20); //score board object
 void setup() {
   frameRate(60);
   size(800, 800);
-  ship = new Ship();
+  shipStartSettings();
+  ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   explosionSound = new SoundFile(this, "explosion.wav");
   shootSound = new SoundFile(this, "shooting.wav");
   smooth(); 
@@ -70,7 +75,7 @@ void setup() {
   }
 
   projectiles = new ArrayList<Projectile>();
-  bulletMaxDistance = height;//move to settings class when made
+  bulletMaxDistance = height*0.8;//move to settings class when made
   background(0);
 }
 
@@ -85,8 +90,7 @@ void draw() {
   } else if (gameScreen == 3) {
     gameOverScreen();
   } else if (gameScreen == 4) {
-    gamePauseScreen(); 
-    
+    gamePauseScreen();
   }
 }
 
@@ -113,22 +117,22 @@ void updateAndDrawProjectiles() {
   }
 }
 
-void createAsteroid(int asteroidLife){
+void createAsteroid(int asteroidLife) {
   PVector location = new PVector(random(random(0, 100)), random(width-100, width), random(height));
   PVector velocity = new PVector(random(-2, 2), random(-2, 2));
   int shape = chooseShape(shapeLength);
   asteroids.add(new Asteroid(location, velocity, asteroidLife, shape));
 }
 
-void splitAsteroid(Asteroid asteroid ){
+void splitAsteroid(Asteroid asteroid ) {
   /*PVector location = asteroid.location;
-  PVector velocityOne = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
-  PVector velocityTwo = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
-  int shapeOne = chooseShape(shapeLength);
-  int shapeTwo = chooseShape(shapeLength);
-  */
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(),chooseShape(shapeLength)));
+   PVector velocityOne = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
+   PVector velocityTwo = new PVector(random(-asteroidSpeed, asteroidSpeed),random(-asteroidSpeed, asteroidSpeed));
+   int shapeOne = chooseShape(shapeLength);
+   int shapeTwo = chooseShape(shapeLength);
+   */
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
 }
 
 /*
@@ -165,6 +169,15 @@ int chooseShape(int maxNumber) {
   return number;
 }
 
+
+void shipStartSettings() {
+  shipFriction = 0.995;
+  shipThrustFact = 0.15;
+  shipMaxSpd = 10; 
+  shipSize = 15;
+  shipTurnArc =4;
+}
+
 //feel free to modify this class structure or give advice.
 class Ship {
 
@@ -173,15 +186,16 @@ class Ship {
   float turnFactor, heading; 
   float resistance, mass, thrustFactor, maxSpeed;
 
-  Ship() {
+  //Ship(float resistance, float maxSpeed, float radius, float accelerationSpeed,)//where size is radius
+  Ship(float friction, float thrusting, float maxSpd, float radius, float mass, float turningArc) {
     //controls speed, amount of rotation and scale of ship, feel free to change
     //down to thrustFact can all be modified in our settings class once that's made
-    resistance=0.99;//lower = more resistance
-    mass = 1;
-    turnFactor =6;//turning tightness
-    maxSpeed = 9;
-    radius =25;//size of ship and collision detection radius
-    thrustFactor=0.15;//propelling
+    this.resistance=friction;//lower = more resistance
+    this.mass = mass;
+    this.turnFactor = turningArc;//turning tightness
+    this.maxSpeed = maxSpd;
+    this.radius =radius;//size of ship and collision detection radius
+    this.thrustFactor=thrusting;//propelling
 
     xPos = width/2.0; 
     yPos = height/2.0;
@@ -212,11 +226,11 @@ class Ship {
     }
     if (sLEFT) {
       heading-=radians(turnFactor);
-      direction=getDirection(direction,heading);
+      direction=getDirection(direction, heading);
     }
     if (sRIGHT) {
       heading+=radians(turnFactor);
-      direction=getDirection(direction,heading);
+      direction=getDirection(direction, heading);
     }
     if (sSHOOT) {
       shoot();
@@ -279,7 +293,7 @@ class Ship {
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
   }
-  
+
   //determines direction/heading
   PVector getDirection(PVector vector, float heading) {
     vector.x = location.mag() * cos(heading);
@@ -481,7 +495,7 @@ void detectCollisions() {
       stroke(255, 0, 0);
       if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
         //Call functions and perform actions to handle the collision event
-          handleAsteroidCollision(asteroid, i, j);
+        handleAsteroidCollision(asteroid, i, j);
         //Check if all of the asteroids have been destroyed.
         if (killCount == numberAsteroids*7) {
           levelUp();
@@ -499,13 +513,13 @@ void detectCollisions() {
   }
 }
 
-void handleAsteroidCollision(Asteroid asteroid,int asteroidId, int projectileId){
+void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId) {
   explosionSound.play();
   aScoreBoard.update(asteroid.hitsLeft);
   projectiles.remove(projectileId);
   asteroid.hitsLeft();
   killCount++;
-  asteroids.remove(asteroidId); 
+  asteroids.remove(asteroidId);
 }
 
 // Display the introduction screen.
@@ -586,6 +600,13 @@ void gamePauseScreen() {
 }
 
 void nextLevel() {
+  //experiment with these figures
+  shipFriction -=0.001; //lower = more
+  shipMaxSpd -= 0.25;
+  shipThrustFact -=0.01;
+  shipSize +=2;
+  shipTurnArc+=0.5;//faster turning compensate slower speed
+  ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   resetArrayLists();
   level++;
   asteroidSpeed+= 0.5;
@@ -612,14 +633,15 @@ void restart() {
   gameScreen = 0;
 }
 
-void resetArrayLists(){
+void resetArrayLists() {
   projectiles.clear();
   asteroids.clear();
 }
 
-void resetConditions(){
+void resetConditions() {
   resetArrayLists();
-  ship = new Ship();  
+  shipStartSettings();
+  ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
   for (int i = 0; i < numberAsteroids; i++) { 
