@@ -147,10 +147,10 @@ PVector mapEdgeWrap(PVector object, float radius) {
   } else if (object.x > width+radius) { //right
     object.x = -radius;
   }
-  if (object.y <= -radius*2) { //top
-    object.y = height;
-  } else if (object.y > height) { //bottom
-    object.y = -radius*2;
+  if (object.y <= -radius) { //top
+    object.y = height+radius;
+  } else if (object.y > height+radius) { //bottom
+    object.y = -radius;
   }
   return object;
 }
@@ -186,7 +186,8 @@ class Ship {
     velocity = new PVector(0, 0);
     location = new PVector(xPos, yPos+radius);
     noseLocation = new PVector(location.x, location.y-radius);
-    direction = new PVector(0, -1);
+    heading = -HALF_PI;
+    direction = PVector.fromAngle(heading);
   }
   void updatePos() {
     xPos=location.x;
@@ -206,10 +207,12 @@ class Ship {
       propel();
     }
     if (sLEFT) {
-      rotateShip(direction, radians(-turnFactor), heading);
+      heading-=radians(turnFactor);
+      direction=getDirection(direction,heading);
     }
     if (sRIGHT) {
-      rotateShip(direction, radians(turnFactor), heading);
+      heading+=radians(turnFactor);
+      direction=getDirection(direction,heading);
     }
     if (sSHOOT) {
       shoot();
@@ -257,7 +260,7 @@ class Ship {
   }
 
   void propel() {
-    PVector thrust = new PVector(cos(heading), sin(heading));
+    PVector thrust = direction.copy();
     if (sUP) {
       thrust.setMag(thrustFactor);//accelerate
     }
@@ -272,19 +275,19 @@ class Ship {
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
   }
-
+  
   //determines direction/heading
-  void rotateShip(PVector vector, float heading, float turnFactor) {
-    heading +=turnFactor;
-    vector.x = vector.mag() * cos(heading);
-    vector.y = vector.mag() * sin(heading);
+  PVector getDirection(PVector vector, float heading) {
+    vector.x = location.mag() * cos(heading);
+    vector.y = location.mag() * sin(heading);
+    return vector;
   }
 
   //Adds a new projectile
   void shoot() {
     //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
     shootSound.play();
-    projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag(), heading));
+    projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag()));
   }
 }
 // Fill random shapes array.
@@ -390,28 +393,25 @@ class Projectile {
   boolean visible;
   float radius;
   float magnitude;
-  float heading;
 
-  Projectile(PVector shipDirection, PVector shipLocation, int speed, float maxDistance, float mag, float heading) {
+  Projectile(PVector shipDirection, PVector shipLocation, int speed, float maxDistance, float mag) {
     this.speed = speed;
     this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
-    this.direction = direction.set(shipDirection.x * speed, shipDirection.y * speed);
+    this.direction =shipDirection.copy();
+    this.direction.setMag(speed);
     this.radius = 5;
     this.maxDistance = maxDistance;
     this.distanceTravelled = 0;
     this.velocity = new PVector();
     this.magnitude = mag;
-    this.heading = heading;
   }
 
 
   //Update position of projectile
   void move() {
-    PVector tempDir = new PVector(cos(heading)*speed, sin(heading)*speed);
-
-    velocity.setMag(magnitude);//should be dynamic, won't exceed ship.maxSpeed
-    velocity.add(tempDir);//add's a constant of bullet speed
+    velocity.setMag(magnitude);//should be dynamic, won't exceed ship.maxSpeed    
+    velocity.add(direction);//add's a constant of bullet speed
     blocation.add(velocity);//ship still: (speed + 0), moving: (speed+current mag)
     distanceTravelled +=velocity.mag();
   }
