@@ -27,6 +27,10 @@ int level = 1;
 int killCount = 0;
 // Asteroid hitpoints.
 int asteroidLife = 3;
+//Points awarded for hitting different size asteroids, three largest.
+int asteroidOnePoints = 300;
+int asteroidTwoPoints = 180;
+int asteroidThreePoints = 100;
 // Length of the shapes array
 int shapeLength = 10;
 // 0 = Start screen, 1 = gameplay, 2 = level, 3 = game over.
@@ -50,6 +54,7 @@ ArrayList<Projectile> projectiles;
 PShape[] shapes = new PShape[shapeLength];
 //ship object
 Ship ship;
+ScoreBoard aScoreBoard;
 //SoundFile explosionSound;
 //SoundFile shootSound;
 Minim soundOne;
@@ -64,13 +69,15 @@ AudioInput inputTwo;
 //Setting up outside of the setup() due to call from gameover. May need to split up things that
 //need to be reset between games in another function, and leave setup for the things that are done once.
 
-ScoreBoard aScoreBoard = new ScoreBoard(400, 20); //score board object
+
 
 void setup() {
+  
   frameRate(60);
   size(800, 800);
   shipStartSettings();
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
+  aScoreBoard = new ScoreBoard(400, 20);
   //explosionSound = new SoundFile(this, "explosion.wav");
   //shootSound = new SoundFile(this, "shooting.wav");
   soundOne = new Minim(this);
@@ -91,7 +98,6 @@ void setup() {
   for (int i = 0; i < numberAsteroids; i++) { 
     createAsteroid(asteroidLife);
   }
-
   projectiles = new ArrayList<Projectile>();
   bulletMaxDistance = height*0.8;//move to settings class when made
   background(0);
@@ -114,21 +120,18 @@ void draw() {
   }
 }
 
-//TO BE MODIFIED ONCE EDGE OF MAP DETECTION FUNCTION IS REFACTORED.
 /*
-Function Purpose: To remove projectiles from the array if they go beyond the bounds of the screen.
- Called from: **
- Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
- Outputs:
+ Function: updateAndDrawProjectiles
+ Purpose: To remove projectiles if they have travelled their max distance, or move and display the projectiles.
+ Inputs: None.
+ Outputs: None.
  */
 void updateAndDrawProjectiles() {
 
   for (int i = projectiles.size()-1; i >= 0; i--) { 
     Projectile bullet = projectiles.get(i);
-
     PVector checkedLocation = mapEdgeWrap(bullet.blocation, bullet.radius);
     bullet.blocation = checkedLocation;
-
     if (bullet.distanceTravelled >= bulletMaxDistance) {
       projectiles.remove(i);
     } else {
@@ -138,53 +141,80 @@ void updateAndDrawProjectiles() {
   }
 }
 
+/*
+ Function: createAsteroid
+ Purpose: Creates a new asteroid object and adds it to the asteroid arraylist.
+ Inputs: An integer representing the life (number of hits) of the asteroid.
+ Outputs: None.
+ */
 void createAsteroid(int asteroidLife) {
+  
   PVector location = new PVector(random(random(0, 100)), random(width-100, width), random(height));
   PVector velocity = new PVector(random(-2, 2), random(-2, 2));
   int shape = chooseShape(shapeLength);
   asteroids.add(new Asteroid(location, velocity, asteroidLife, shape));
 }
 
+/*
+ Function: splitAsteroid
+ Purpose: When an asteroid with 3 or 2 hits reamining is destroyed, this function splits the asteroid into two smaller ones 
+          with hits-1 remaining.
+ Inputs: The asteroid object which was hit by a projectile with more than 1 life remaining.
+ Outputs: None.
+ */
 void splitAsteroid(Asteroid asteroid ) {
+  
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
   random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed),
   random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
 }
 
-
 /*
 Function: circleCollision
- Purpose: To remove projectiles from the array if they go beyond the bounds of the screen.
- Inputs: Floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+ Purpose: To detect collisions between asteroids & bullets, and asteroids and the player ship using circular based collision detection.
+ Inputs: Floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object(radOne, radTwo).
  Outputs: Boolean true if a collision is detected, false if none was.
  */
 boolean circleCollision(float xPos1, float yPos1, float radOne, float xPos2, float yPos2, float radTwo) {
-
+  //Is the centre of each object closer than their combined radii.
   if (dist(xPos1, yPos1, xPos2, yPos2) < radOne + radTwo) {
-    //There is a collision.
     return true;
   }
   return false;
 }
 
+/*
+Function: mapEdgeWrap
+ Purpose: To detect if an object's PVector is leaving the screen bounds, and if so place them on the opposite side.
+ Inputs: A PVector representing the object's location, and a float of the objects radius.
+ Outputs: The original PVector if it is not leaving the screen, a modified PVector if it was leaving the screen.
+ */
 PVector mapEdgeWrap(PVector object, float radius) {
-  if (object.x < -radius) { //left
+  //Checking left,right,top,bottom boundaries in order.
+  if (object.x < -radius) {
     object.x = width+radius;
-  } else if (object.x > width+radius) { //right
+  } else if (object.x > width+radius) {
     object.x = -radius;
   }
-  if (object.y <= -radius) { //top
+  if (object.y <= -radius) {
     object.y = height+radius;
-  } else if (object.y > height+radius) { //bottom
+  } else if (object.y > height+radius) {
     object.y = -radius;
   }
   return object;
 }
 
-int chooseShape(int maxNumber) {
-  int number = int(random(0, maxNumber));
-
+/*
+Function: chooseShape
+ Purpose: A utility function to provide a random number between 0 the int shapeLength which defines how many randomly
+          shaped asteroid types there are to draw.
+ Inputs: An integer configuration setting.
+ Outputs: An integer between 0 and shapeLength
+ */
+int chooseShape(int shapeLength) {
+  
+  int number = int(random(0, shapeLength));
   return number;
 }
 
@@ -322,7 +352,7 @@ class Ship {
 
   //Adds a new projectile
   void shoot() {
-    //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
+    
     shootSound.trigger();
     projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag()));
   }
@@ -421,9 +451,15 @@ class Asteroid {
   }
 }
 
-//Change hardcoded radius, solve and clean up class once issue it fixed.
-//Normal speed = 6, level 2 = 5, level >=3 = 4.
+/*
+ Class: Projectile
+ Purpose: A class for the projectile objects.
+ Inputs: PVectors representing the ship's current location and direction, an integer for the projectile speed,
+         and floats for the projectile's maximum distance it can travel and its magnatude.
+ Methods: move and display.
+ */
 class Projectile {
+  
   PVector blocation = new PVector(), direction = new PVector(), velocity;
   float  distanceTravelled, maxDistance;
   int speed;
@@ -443,51 +479,86 @@ class Projectile {
     this.velocity = new PVector();
     this.magnitude = mag;
   }
-
-
-  //Update position of projectile
+  
+ /*
+  Method Purpose: To move the projectile on the screen, also adds the ship's velocity when fired.
+  Inputs: None.
+  Outputs: None.
+  */
   void move() {
-    velocity.setMag(magnitude);//should be dynamic, won't exceed ship.maxSpeed    
-    velocity.add(direction);//add's a constant of bullet speed
-    blocation.add(velocity);//ship still: (speed + 0), moving: (speed+current mag)
+    //Adds the ship's current velocity to the projectiles.
+    velocity.setMag(magnitude);  
+    //Adds the bullets own velocity to it.
+    velocity.add(direction);
+    blocation.add(velocity);
     distanceTravelled +=velocity.mag();
   }
-
+  
+ /*
+  Method Purpose: To draw the projectile.
+  Inputs: None.
+  Outputs: None.
+  */
   void display() {
-    //Draw bullet.
+
     ellipse(blocation.x, blocation.y, 5, 5);
   }
 }
 
+/*
+ Class: ScoreBoard
+ Purpose: A class to keep track of and display the score.
+ Inputs: Floats representing the x and y coordinates of the centre of the score.
+ Methods: update, reset, drawMe.
+ */
 class ScoreBoard {
+  
   int score;
   float xPos;
   float yPos;
 
   ScoreBoard(float xPos, float yPos) {
+    
     this.score = 0; 
     this.xPos = xPos;
     this.yPos = yPos;
   }
-  //Method to update the score, largest asteroid worth the least, smallest the most. Based off hits left attribute.
+  
+ /*
+  Method Purpose: Updates the score.
+  Inputs: An integer representing the amount of hits left the asteroid destoryed had.
+  Outputs: None.
+  */
   void update(int hitsLeft) {
+    //Awards more points for hitting a smaller size asteroid.
     switch(hitsLeft) {
     case 1:
-      score += 300;
+      score += asteroidOnePoints;
       break;
     case 2:
-      score += 180;
+      score += asteroidTwoPoints;
       break;
     case 3: 
-      score += 100;
+      score += asteroidThreePoints;
       break;
     }
   }
 
+ /*
+  Method Purpose: Resets the score.
+  Inputs: None.
+  Outputs: None.
+  */
   void reset() {
+    
     score = 0;
   }
-
+  
+ /*
+  Method Purpose: Display the current score.
+  Inputs: None.
+  Outputs: None.
+  */
   void drawMe() {
     textSize(20);
     fill(255, 255, 255);
@@ -496,22 +567,25 @@ class ScoreBoard {
   }
 }
 
-//Detect collisions between Ship + Asteroids and asteroids + bullets.
+/*
+ Function: detectCollisions
+ Purpose: A function check and handle collisions between the asteroids, projectiles and ship.
+ Inputs: None.
+ Outputs: None.
+ */
 void detectCollisions() {
+  
   for (int i = asteroids.size()-1; i >= 0; i--) {
     Asteroid asteroid = asteroids.get(i);
-    noFill();
-    stroke(255, 0, 0);
-    // Check to see if the player's ship is hit first - game over
+    //Call the circle collision detection function between the players ship and the current asteroid object.
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
       lifeEnd();
       break;
     }
-
+    //No collisions with the players ship found, compare the current asteroid to the projectiles.
     for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
-      noFill();
-      stroke(255, 0, 0);
+      //Found a collision between the current asteroid and projectile.
       if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())){
         //Call functions and perform actions to handle the collision event
         handleAsteroidCollision(asteroid, i, j);
@@ -520,23 +594,31 @@ void detectCollisions() {
           levelUp();
           nextLevel();
           killCount = 0;
-          break;
         }
-        //Split into new asteroids
+        //Split into new asteroids.
         if (asteroid.hits() >0) {
           splitAsteroid(asteroid);
-          break;
         }
+        break;
       }
     }
   }
 }
 
+/*
+ Function: handleAsteroidCollision
+ Purpose: A function to handle a collision between an asteroid and a projectile.
+ Inputs: The asteroid object, and two integers representing the position of the projectile and asteroid objects within their arraylists.
+ Outputs: None.
+ */
 void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId) {
+  
   explosionSound.trigger();
   aScoreBoard.update(asteroid.hitsLeft);
   projectiles.remove(projectileId);
+  //Remove the life remaining of the asteroid
   asteroid.hitsLeft();
+  //Keep track of how many asteroids have been destroyed.
   killCount++;
   asteroids.remove(asteroidId);
 }
