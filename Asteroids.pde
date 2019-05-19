@@ -79,7 +79,7 @@ void setup() {
   explosionSound = soundTwo.loadSample("explosion.wav");
   inputOne = soundOne.getLineIn();
   inputTwo = soundTwo.getLineIn();
-  
+
   smooth(); 
   // Generate an array of random asteroid shapes.
   drawShapes();
@@ -119,6 +119,7 @@ void draw() {
 Function Purpose: To remove projectiles from the array if they go beyond the bounds of the screen.
  Called from: **
  Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+ Outputs:
  */
 void updateAndDrawProjectiles() {
 
@@ -145,19 +146,23 @@ void createAsteroid(int asteroidLife) {
 }
 
 void splitAsteroid(Asteroid asteroid ) {
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
+  random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed),
+  random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
 }
 
+
 /*
-Function Purpose: To detect collisions between two objects using circle collision detection.
- Called from: **
- Inputs: floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+Function: circleCollision
+ Purpose: To remove projectiles from the array if they go beyond the bounds of the screen.
+ Inputs: Floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object.
+ Outputs: Boolean true if a collision is detected, false if none was.
  */
 boolean circleCollision(float xPos1, float yPos1, float radOne, float xPos2, float yPos2, float radTwo) {
 
   if (dist(xPos1, yPos1, xPos2, yPos2) < radOne + radTwo) {
-    //There is a collision
+    //There is a collision.
     return true;
   }
   return false;
@@ -507,7 +512,7 @@ void detectCollisions() {
       Projectile bullet = projectiles.get(j);
       noFill();
       stroke(255, 0, 0);
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())){
         //Call functions and perform actions to handle the collision event
         handleAsteroidCollision(asteroid, i, j);
         //Check if all of the asteroids have been destroyed.
@@ -615,15 +620,15 @@ void gamePauseScreen() {
   text("Hit P to resume.", width/2, 450);
 }
 
-void deathScreen(){
+void deathScreen() {
   background(0);
   textSize(40);
   fill(255, 255, 255);
   textAlign(CENTER);
-  if (playerLives == 1){
-  text("Ouch, you died. " +"\n" + playerLives + " life remaining.", width/2, height/2); 
+  if (playerLives == 1) {
+    text("Ouch, you died. " +"\n" + playerLives + " life remaining.", width/2, height/2);
   } else {
-    text("Ouch, you died. " +"\n" + playerLives + " lives remaining.", width/2, height/2); 
+    text("Ouch, you died. " +"\n" + playerLives + " lives remaining.", width/2, height/2);
   }
   resetArrayLists();
   killCount = 0;
@@ -668,7 +673,7 @@ void restart() {
   gameScreen = 0;
 }
 
-void death(){
+void death() {
   gameScreen = 5;
 }
 
@@ -693,30 +698,30 @@ void resetConditions() {
   background(0);
 }
 
-void livesDisplay(){
-    noFill();
-    stroke(255);
-    randomShape = createShape();
-    randomShape.beginShape();
-    randomShape.vertex(0, -25);//top
-    randomShape.vertex(-25, 25);//bottom left
-    randomShape.vertex(0, 25/2.0);//bottom middle
-    randomShape.vertex(25, 25);//bottom right
-    randomShape.endShape(CLOSE);
-    if (playerLives == 3){
+void livesDisplay() {
+  noFill();
+  stroke(255);
+  randomShape = createShape();
+  randomShape.beginShape();
+  randomShape.vertex(0, -25);//top
+  randomShape.vertex(-25, 25);//bottom left
+  randomShape.vertex(0, 25/2.0);//bottom middle
+  randomShape.vertex(25, 25);//bottom right
+  randomShape.endShape(CLOSE);
+  if (playerLives == 3) {
     shape(randomShape, 50, 50);
     shape(randomShape, 100, 50);
     shape(randomShape, 150, 50);
-    } else if (playerLives == 2){
-      shape(randomShape, 50, 50);
-      shape(randomShape, 100, 50);
-      } else if (playerLives == 1){
-        shape(randomShape, 50, 50);        
+  } else if (playerLives == 2) {
+    shape(randomShape, 50, 50);
+    shape(randomShape, 100, 50);
+  } else if (playerLives == 1) {
+    shape(randomShape, 50, 50);
   }
 }
 
-void lifeEnd(){
-  if (playerLives > 0){
+void lifeEnd() {
+  if (playerLives > 0) {
     playerLives--;
     death();
   } else {
@@ -734,7 +739,7 @@ void mousePressed() {
     resetConditions();
     aScoreBoard.reset();
     gameScreen = 2;
-  } else if (gameScreen == 5){
+  } else if (gameScreen == 5) {
     gameScreen = 2;
   }
 }
