@@ -64,13 +64,6 @@ AudioSample explosionSound;
 AudioInput inputOne;
 AudioInput inputTwo;
 
-
-
-//Setting up outside of the setup() due to call from gameover. May need to split up things that
-//need to be reset between games in another function, and leave setup for the things that are done once.
-
-
-
 void setup() {
   
   frameRate(60);
@@ -106,9 +99,9 @@ void setup() {
 void draw() {
 
   if (gameScreen == 0) {
-    initScreen();
+    startScreen();
   } else if (gameScreen == 1) {
-    gameScreen();
+    gamePlayScreen();
   } else if (gameScreen == 2) {
     levelScreen();
   } else if (gameScreen == 3) {
@@ -357,7 +350,13 @@ class Ship {
     projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag()));
   }
 }
-// Fill random shapes array.
+
+/*
+ Function: drawShapes
+ Purpose: To fill an array with a series of randomly generates shapes that will be used for the asteroids.
+ Inputs: None.
+ Outputs: None.
+ */
 void drawShapes() {
   for (int i = 0; i < shapes.length; i++) {
     noFill();
@@ -381,12 +380,23 @@ void drawShapes() {
   }
 }
 
+/*
+Class: Asteroid
+ Purpose: To generate an asteroid object.
+ Inputs: PVectors for the location and direction of the asteroid. Ints for random
+         shape generation and determination of asteroid size.
+ Functions: drawAsteroid, move, xPos, yPos, hitsLeft, aRadius, hits.
+ */
 class Asteroid {
+  // Location of the asteroid.
   PVector location;
+  // Speed of the asteroid.
   PVector velocity;
   //Number of times to hit.
   int hitsLeft;
+  // Base radius of the asteroid.
   float radius = 50;
+  // Random number to pick from shape arrayfo asteroid.
   int shape;
   // Initialise.
   Asteroid(PVector location, PVector velocity, int hitsLeft, int shape) {
@@ -396,7 +406,12 @@ class Asteroid {
     this.shape = shape;
   }
 
-  // Draw each Asteroid to the screen at the appropriate size.
+/*
+ Function: drawAsteroid
+ Purpose: Draw each Asteroid to the screen at the appropriate size.
+ Inputs: PShape of randomly generated asteroid.
+ Outputs: None.
+ */
   void drawAsteroid(PShape shapes) {
     if (hitsLeft == 3) {
       shape(shapes, location.x, location.y, radius*3, radius*3);
@@ -408,6 +423,12 @@ class Asteroid {
   }
 
   // Handles asteroid movement and boundary checking.
+/*
+ Function: move
+ Purpose: Handles asteroid movement and boundary checking.
+ Inputs: None.
+ Outputs: None.
+ */  
   void move() {
     location.add(velocity);    
     if (location.x > width) {
@@ -422,21 +443,42 @@ class Asteroid {
     }
   }
 
-  // Returns x coordinate of Asteroid.
+/*
+ Function: xPos
+ Purpose: Returns x coordinate of Asteroid.
+ Inputs: None.
+ Outputs: x coordinate.
+ */    
   float xPos() {
     return location.x;
   }
 
-  // Returns y coordinate of Asteroid.
+/*
+ Function: yPos
+ Purpose: Returns y coordinate of Asteroid.
+ Inputs: None.
+ Outputs: y coordinate.
+ */
   float yPos() {
     return location.y;
   }
 
-  // Subtracts a point from the asteroids life.
+/*
+ Function: hitsLeft
+ Purpose: Subtracts a point from the asteroids life.
+ Inputs: None.
+ Outputs: None.
+ */  
   void hitsLeft() {
     hitsLeft--;
   }
 
+/*
+ Function: aRadius
+ Purpose: Sets radius of the asteroid according to the number of hitsLeft.
+ Inputs: None.
+ Outputs: Returns the appropriate radius.
+ */
   float aRadius() {
     if (hitsLeft == 3) {
       return (radius*3)/2;
@@ -445,7 +487,12 @@ class Asteroid {
     } else return radius/2;
   }
 
-  // returns current number of hits asteroid can sustain.
+/*
+ Function: hits
+ Purpose: Returns current number of hits asteroid can sustain.
+ Inputs: None.
+ Outputs: Returns the number of hits left.
+ */
   int hits() {
     return hitsLeft;
   }
@@ -455,7 +502,7 @@ class Asteroid {
  Class: Projectile
  Purpose: A class for the projectile objects.
  Inputs: PVectors representing the ship's current location and direction, an integer for the projectile speed,
-         and floats for the projectile's maximum distance it can travel and its magnatude.
+         and floats for the projectile's maximum distance it can travel and its magnitude.
  Methods: move and display.
  */
 class Projectile {
@@ -623,8 +670,13 @@ void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId
   asteroids.remove(asteroidId);
 }
 
-// Display the introduction screen.
-void initScreen() {
+/*
+ Function: startScreen
+ Purpose: Display the introduction screen.
+ Inputs: None.
+ Outputs: None.
+ */
+void startScreen() {
   textSize(100);
   fill(255, 255, 255);
   textAlign(CENTER);
@@ -638,15 +690,17 @@ void initScreen() {
   textAlign(CENTER);
   text("W,A,S,D keys for movement, L/SPACEBAR to shoot, p to pause.", width/2, 750);
 }
-// Pause the game.
-void pauseScreen() {
-  noLoop();
-}
 
-// Gameplay.
-void gameScreen() {
-  background(0);// Set to black as per the original game.
-  // Populate the ArrayList (backwards to avoid missing indexes) and project to the screen.
+/*
+ Function: gamePlayScreen
+ Purpose: Display the main game screen and run the major game related functions.
+ Inputs: None.
+ Outputs: None.
+ */
+void gamePlayScreen() {
+  // Set to black as per the original game.
+  background(0);
+  // Populate the asteroids ArrayList (backwards to avoid missing indexes) and project to the screen.
   for (int i = asteroids.size()-1; i >= 0; i--) { 
     Asteroid asteroid = asteroids.get(i);
     asteroid.move();
@@ -661,6 +715,12 @@ void gameScreen() {
   updateAndDrawProjectiles();
 }
 
+/*
+ Function: levelScreen
+ Purpose: Display the level screen as well as the score and lives remaining.
+ Inputs: None.
+ Outputs: None.
+ */
 void levelScreen() {
   background(0);
   livesDisplay();
@@ -669,9 +729,17 @@ void levelScreen() {
   fill(255, 255, 255);
   textAlign(CENTER);
   text(("Level - " + level), width/2, height/2);
+  textSize(25);
+  text("Click mouse to continue.", width/2, height*0.9); 
 }
 
-// Displays the game over screen.
+
+/*
+ Function: gameOverScreen
+ Purpose: Display the game over screen, reset level and number of asteroids.
+ Inputs: None.
+ Outputs: None.
+ */
 void gameOverScreen() {
   background(0);
   textSize(100);
@@ -690,6 +758,12 @@ void gameOverScreen() {
   numberAsteroids = level;
 }
 
+/*
+ Function: gamePauseScreen
+ Purpose: Display the pause screen.
+ Inputs: None.
+ Outputs: None.
+ */
 void gamePauseScreen() {
   background(0);
   textSize(100);
@@ -702,16 +776,24 @@ void gamePauseScreen() {
   text("Hit P to resume.", width/2, 450);
 }
 
+/*
+ Function: deathScreen
+ Purpose: Display the ship destroyed screen, reset necessary variables and generate a new ship and asteroids.
+ Inputs: None.
+ Outputs: None.
+ */
 void deathScreen() {
   background(0);
   textSize(40);
   fill(255, 255, 255);
   textAlign(CENTER);
   if (playerLives == 1) {
-    text("Ouch, you died. " +"\n" + playerLives + " life remaining.", width/2, height/2);
+    text("Ouch, you died. " +"\n" + playerLives + " spare ship remaining.", width/2, height/2);
   } else {
-    text("Ouch, you died. " +"\n" + playerLives + " lives remaining.", width/2, height/2);
+    text("Ouch, you died. " +"\n" + playerLives + " spare ships remaining.", width/2, height/2);
   }
+  textSize(25);
+  text("Click mouse to continue.", width/2, height*0.9);
   resetArrayLists();
   killCount = 0;
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
@@ -721,6 +803,12 @@ void deathScreen() {
   }
 }
 
+/*
+ Function: nextLevel
+ Purpose: Adjust parameters need for the next level, including difficulty increases.
+ Inputs: None.
+ Outputs: None.
+ */
 void nextLevel() {
   //experiment with these figures
   shipFriction -=0.001; //lower = more
@@ -738,32 +826,84 @@ void nextLevel() {
   }
 }
 
+/*
+ Function: startGame
+ Purpose: Sets gameScreen appropriately.
+ Inputs: None.
+ Outputs: None.
+ */
 void startGame() {
   gameScreen = 1;
 }
 
+/*
+ Function: levelUp
+ Purpose: Sets gameScreen appropriately.
+ Inputs: None.
+ Outputs: None.
+ */
 void levelUp() {
   gameScreen = 2;
 }
 
+/*
+ Function: gameOver
+ Purpose: Sets gameScreen appropriately.
+ Inputs: None.
+ Outputs: None.
+ */
 void gameOver() {
   gameScreen = 3;
 }
 
+/*
+ Function: restart
+ Purpose: Sets gameScreen appropriately, resets arraylists.
+ Inputs: None.
+ Outputs: None.
+ */
 void restart() {
   resetArrayLists();
   gameScreen = 0;
 }
 
+/*
+ Function: death
+ Purpose: Sets gameScreen appropriately.
+ Inputs: None.
+ Outputs: None.
+ */
 void death() {
   gameScreen = 5;
 }
 
+/*
+ Function: pauseScreen
+ Purpose: Stop draw from runnning.
+ Inputs: None.
+ Outputs: None.
+ */
+void pauseScreen() {
+  noLoop();
+}
+
+/*
+ Function: resetArrayLists
+ Purpose: Resets the arraylists.
+ Inputs: None.
+ Outputs: None.
+ */
 void resetArrayLists() {
   projectiles.clear();
   asteroids.clear();
 }
 
+/*
+ Function: resetConditions
+ Purpose: Resets all game parameters, preparing for a fresh new game.
+ Inputs: None.
+ Outputs: None.
+ */
 void resetConditions() {
   resetArrayLists();
   shipStartSettings();
@@ -780,6 +920,12 @@ void resetConditions() {
   background(0);
 }
 
+/*
+ Function: livesDisplay
+ Purpose: Draw and display images representing ships remaining.
+ Inputs: None.
+ Outputs: None.
+ */
 void livesDisplay() {
   noFill();
   stroke(255);
@@ -802,6 +948,12 @@ void livesDisplay() {
   }
 }
 
+/*
+ Function: lifeEnd
+ Purpose: Check for game over condition after player death, updates number of player lives.
+ Inputs: None.
+ Outputs: None.
+ */
 void lifeEnd() {
   if (playerLives > 0) {
     playerLives--;
