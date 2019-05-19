@@ -4,7 +4,7 @@
  * Date: 06/05/2019
  * Course: COSC101 - Software Development Studio 1
  * Desc: Asteroids game
- * Usage: Make sure to run in the processing environment, have the sound library installed and press play etc...
+ * Usage: Make sure to run in the processing environment, have the Minim sound library installed and press play etc...
  *
  Resource Credits
  Asteroid explosion - https://freesound.org/people/runningmind/sounds/387857/ 
@@ -12,7 +12,8 @@
  
  */
 
-import processing.sound.*;
+//import processing.sound.*;
+import ddf.minim.*;
 PShape randomShape;
 //control key direction
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
@@ -49,8 +50,16 @@ ArrayList<Projectile> projectiles;
 PShape[] shapes = new PShape[shapeLength];
 //ship object
 Ship ship;
-SoundFile explosionSound;
-SoundFile shootSound;
+//SoundFile explosionSound;
+//SoundFile shootSound;
+Minim soundOne;
+Minim soundTwo;
+AudioSample shootSound;
+AudioSample explosionSound;
+AudioInput inputOne;
+AudioInput inputTwo;
+
+
 
 //Setting up outside of the setup() due to call from gameover. May need to split up things that
 //need to be reset between games in another function, and leave setup for the things that are done once.
@@ -62,8 +71,15 @@ void setup() {
   size(800, 800);
   shipStartSettings();
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
-  explosionSound = new SoundFile(this, "explosion.wav");
-  shootSound = new SoundFile(this, "shooting.wav");
+  //explosionSound = new SoundFile(this, "explosion.wav");
+  //shootSound = new SoundFile(this, "shooting.wav");
+  soundOne = new Minim(this);
+  soundTwo = new Minim(this);
+  shootSound = soundOne.loadSample("shooting.wav");
+  explosionSound = soundTwo.loadSample("explosion.wav");
+  inputOne = soundOne.getLineIn();
+  inputTwo = soundTwo.getLineIn();
+  
   smooth(); 
   // Generate an array of random asteroid shapes.
   drawShapes();
@@ -302,7 +318,7 @@ class Ship {
   //Adds a new projectile
   void shoot() {
     //Normal speed = 6, level 2 = 5, level >=3 = 4. Tie to difficulty game settings.
-    shootSound.play();
+    shootSound.trigger();
     projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag()));
   }
 }
@@ -512,7 +528,7 @@ void detectCollisions() {
 }
 
 void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId) {
-  explosionSound.play();
+  explosionSound.trigger();
   aScoreBoard.update(asteroid.hitsLeft);
   projectiles.remove(projectileId);
   asteroid.hitsLeft();
