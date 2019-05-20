@@ -38,6 +38,8 @@ int shapeLength = 10;
 int gameScreen = 0;
 // Number of ships remaining.
 int playerLives = 3;
+// Number of alien ships.
+int aliens = 1;
 // Speed setting for asteroids.
 float asteroidSpeed = 1; 
 // Distance bullets travel before being removed.
@@ -53,6 +55,7 @@ ArrayList<Asteroid> asteroids;
 ArrayList<Projectile> projectiles;
 // Array of randomly generated shapes.
 PShape[] shapes = new PShape[shapeLength];
+Asteroid alienShip;
 
 JSONArray values;
 String[] playerName = new String[5];//player name
@@ -73,11 +76,11 @@ AudioInput inputOne;
 AudioInput inputTwo;
 
 void setup() {
-  
   frameRate(60);
   size(800, 800);
   readInScores();
   shipStartSettings();
+  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   aScoreBoard = new ScoreBoard(400, 20);
   //explosionSound = new SoundFile(this, "explosion.wav");
@@ -476,12 +479,21 @@ class Asteroid {
   float radius = 50;
   // Random number to pick from shape arrayfo asteroid.
   int shape;
+  boolean show = true;
+  int speed = 3;
+  
+  PShape alienShip;
   // Initialise.
   Asteroid(PVector location, PVector velocity, int hitsLeft, int shape) {
     this.location = location;
     this.velocity = velocity;
     this.hitsLeft = hitsLeft;
     this.shape = shape;
+  }
+  
+  Asteroid(PVector location, PVector velocity) {
+    this.location = location;
+    this.velocity = velocity;
   }
 
 /*
@@ -491,14 +503,42 @@ class Asteroid {
  Outputs: None.
  */
   void drawAsteroid(PShape shapes) {
+    
     if (hitsLeft == 3) {
       shape(shapes, location.x, location.y, radius*3, radius*3);
     } else if (hitsLeft == 2) {
       shape(shapes, location.x, location.y, radius*2, radius*2);
     } else if (hitsLeft == 1) {
       shape(shapes, location.x, location.y, radius, radius);
+    } 
+  }
+  
+  void drawAlien(){
+    
+    if(show == true){
+    noFill();
+    ellipse(location.x , location.y, radius/2, radius/2);
     }
   }
+  
+  void showAlien(){
+    
+   show = false; 
+  }
+  
+  void randomAlien(){
+    
+    location.add(velocity);
+    if(location.y > 550){
+     velocity.y = -3;
+   } 
+   if (location.y < 275){
+     velocity.y = 3;
+   }
+    
+  }
+    
+    
 
   // Handles asteroid movement and boundary checking.
 /*
@@ -508,6 +548,7 @@ class Asteroid {
  Outputs: None.
  */  
   void move() {
+    
     location.add(velocity);    
     if (location.x > width) {
       location.x = 0;
@@ -528,6 +569,7 @@ class Asteroid {
  Outputs: x coordinate.
  */    
   float xPos() {
+    
     return location.x;
   }
 
@@ -538,6 +580,7 @@ class Asteroid {
  Outputs: y coordinate.
  */
   float yPos() {
+    
     return location.y;
   }
 
@@ -548,6 +591,7 @@ class Asteroid {
  Outputs: None.
  */  
   void hitsLeft() {
+    
     hitsLeft--;
   }
 
@@ -558,6 +602,7 @@ class Asteroid {
  Outputs: Returns the appropriate radius.
  */
   float aRadius() {
+    
     if (hitsLeft == 3) {
       return (radius*3)/2;
     } else if (hitsLeft == 2) {
@@ -572,10 +617,10 @@ class Asteroid {
  Outputs: Returns the number of hits left.
  */
   int hits() {
+    
     return hitsLeft;
   }
 }
-
 /*
  Class: Projectile
  Purpose: A class for the projectile objects.
@@ -715,7 +760,7 @@ void detectCollisions() {
         //Call functions and perform actions to handle the collision event
         handleAsteroidCollision(asteroid, i, j);
         //Check if all of the asteroids have been destroyed.
-        if (killCount == numberAsteroids*7) {
+        if (killCount == numberAsteroids*7 && aliens == 0) {
           levelUp();
           nextLevel();
           killCount = 0;
@@ -727,6 +772,23 @@ void detectCollisions() {
         break;
       }
     }
+  }
+}
+
+void alienCollison(){
+  if (aliens == 1){
+  if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())) {
+    lifeEnd();
+    alienShip.showAlien();
+  }
+  for (int j=projectiles.size()-1; j >= 0; j--) {
+    Projectile bullet = projectiles.get(j);
+    if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())){
+      alienShip.showAlien();
+      aliens = 0;
+      projectiles.remove(j);
+    }
+  }
   }
 }
 
@@ -784,9 +846,13 @@ void gamePlayScreen() {
     asteroid.move();
     asteroid.drawAsteroid(shapes[asteroid.shape]);
   }
+  alienShip.drawAlien();
+  alienShip.move();
+  alienShip.randomAlien();
   aScoreBoard.drawMe();
   livesDisplay();
   detectCollisions();
+  alienCollison();
   ship.updatePos();
   ship.edgeCheck();
   ship.display();
@@ -833,6 +899,7 @@ void gameOverScreen() {
   textAlign(CENTER);
   text("Your score was: " + aScoreBoard.score, width/2, 650);
   level = 1;
+  aliens = 1;
   numberAsteroids = level;
 }
 
@@ -873,7 +940,9 @@ void deathScreen() {
   textSize(25);
   text("Click mouse to continue.", width/2, height*0.9);
   resetArrayLists();
+  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   killCount = 0;
+  aliens = 1;
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   numberAsteroids = level;
   for (int i = 0; i < numberAsteroids; i++) { 
@@ -895,7 +964,9 @@ void nextLevel() {
   shipSize +=2;
   shipTurnArc+=0.5;//faster turning compensate slower speed
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
+  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   resetArrayLists();
+  aliens = 1;
   level++;
   asteroidSpeed+= 0.5;
   numberAsteroids = level;
@@ -995,6 +1066,7 @@ void resetConditions() {
   killCount = 0;
   asteroidSpeed = 1;
   playerLives = 3;
+  aliens = 1;
   projectiles = new ArrayList<Projectile>();
   background(0);
 }
