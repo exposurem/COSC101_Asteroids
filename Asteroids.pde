@@ -19,6 +19,7 @@ PShape randomShape;
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
 // For the pause screen.
 boolean paused;
+boolean kbEntry;
 // Maximum number of largest asteroids on screen
 int numberAsteroids = 1;
 // Game level.
@@ -52,6 +53,13 @@ ArrayList<Asteroid> asteroids;
 ArrayList<Projectile> projectiles;
 // Array of randomly generated shapes.
 PShape[] shapes = new PShape[shapeLength];
+
+JSONArray values;
+String[] playerName = new String[5];//player name
+int[] highscores = new int[5];//
+
+
+
 //ship object
 Ship ship;
 ScoreBoard aScoreBoard;
@@ -68,6 +76,7 @@ void setup() {
   
   frameRate(60);
   size(800, 800);
+  readInScores();
   shipStartSettings();
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   aScoreBoard = new ScoreBoard(400, 20);
@@ -111,6 +120,7 @@ void draw() {
   } else if (gameScreen == 5) {
     deathScreen();
   }
+  
 }
 
 /*
@@ -211,7 +221,12 @@ int chooseShape(int shapeLength) {
   return number;
 }
 
-
+/*
+ Function: shipStartSettings()
+ Purpose: Set's value of Ship object parameter's, called upon game start & restart following a game over.
+ Inputs: None.
+ Outputs: None.
+ */  
 void shipStartSettings() {
   shipFriction = 0.995;
   shipThrustFact = 0.15;
@@ -220,7 +235,12 @@ void shipStartSettings() {
   shipTurnArc =4;
 }
 
-//feel free to modify this class structure or give advice.
+/*
+ Class: Ship
+ Purpose: Generate's a ship object, along with value's defining variable's for each instance. Update's ship movement & rotation.
+ Inputs: None.
+ Functions: updatePos, display, drawShip, drawExhaust, propel, edgeCheck, getDirection, shoot.
+ */  
 class Ship {
 
   PVector location, direction, noseLocation, acceleration, velocity;
@@ -228,20 +248,25 @@ class Ship {
   float turnFactor, heading; 
   float resistance, mass, thrustFactor, maxSpeed;
 
-  //Ship(float resistance, float maxSpeed, float radius, float accelerationSpeed,)//where size is radius
+  
   Ship(float friction, float thrusting, float maxSpd, float radius, float mass, float turningArc) {
-    //controls speed, amount of rotation and scale of ship, feel free to change
-    //down to thrustFact can all be modified in our settings class once that's made
-    this.resistance=friction;//lower = more resistance
+    
+    // Ship resistance; lower = more.
+    this.resistance=friction;
+    // Ship mass.
     this.mass = mass;
-    this.turnFactor = turningArc;//turning tightness
+    // Turning tightness.
+    this.turnFactor = turningArc;
+    // Maximum ship speed.
     this.maxSpeed = maxSpd;
-    this.radius =radius;//size of ship and collision detection radius
-    this.thrustFactor=thrusting;//propelling
+    // Size of ship and collision detection radius.
+    this.radius =radius;
+    // Propelling force.
+    this.thrustFactor=thrusting;
 
     xPos = width/2.0; 
     yPos = height/2.0;
-    //initialise vectors
+    // Initialise PVectors.
     acceleration = new PVector(0, 0);
     velocity = new PVector(0, 0);
     location = new PVector(xPos, yPos+radius);
@@ -249,6 +274,13 @@ class Ship {
     heading = -HALF_PI;
     direction = PVector.fromAngle(heading);
   }
+  
+/*
+ Function: updatePos
+ Purpose: Update's location, heading and velocity of PVector's, call's keypress functions.
+ Inputs: None.
+ Outputs: None.
+ */    
   void updatePos() {
     xPos=location.x;
     yPos=location.y;
@@ -258,7 +290,8 @@ class Ship {
     velocity.mult(resistance);
     velocity.limit(maxSpeed);
     location.add(velocity);
-    acceleration.set(0, 0);//reset acceleration so it doesn't stack
+    // Limit by resetting each frame.
+    acceleration.set(0, 0);
     noseLocation.set(noseX, noseY);
     if (sUP) {
       propel();
@@ -280,25 +313,37 @@ class Ship {
     }
   }
 
+/*
+ Function: display
+ Purpose: Using a matrix at current x & y coord's, rotates and displays via drawShip().
+ Inputs: None.
+ Outputs: None.
+ */  
   void display() {
+    
     pushMatrix();
     translate(location.x, location.y);
     rotate(heading+HALF_PI);
     noFill();
     drawShip();
-    if (sUP) {//if propelling show exhaust flame
+    if (sUP) {
       drawExhaust();
     }
-    //coordinates for nose outside of matrix
+    //Coordinates for nose outside of matrix.
     noseX=screenX(0, -radius);
     noseY=screenY(0, -radius);
     popMatrix();
     stroke(255);
-    //ellipse(noseLocation.x,noseLocation.y,5,5);//ship nose location
-    //ellipse(location.x, location.y, 5, 5);//ship center of rotation
   }
 
+/*
+ Function: drawShip
+ Purpose: Draw's vertex ship at current location, based on isosceles triangle.
+ Inputs: None.
+ Outputs: None.
+ */  
   void drawShip() {
+    
     stroke(255);
     beginShape();
     vertex(0, -radius);//top
@@ -308,42 +353,75 @@ class Ship {
     endShape(CLOSE);
   }
 
+/*
+ Function: drawExhaust
+ Purpose: Draw's flame for ship while propelling forwards.
+ Inputs: None
+ Outputs: None.
+ */  
   void drawExhaust() {
-    //strokeWeight(3);
-    stroke(255); //flame colour
+    
+    stroke(255);
     beginShape();
     vertex(0, radius/2.0);
     vertex(-radius/2.0, radius*0.75);
-    vertex(0, radius*1.5);//peak of flame
+    vertex(0, radius*1.5);
     vertex(radius/2.0, radius*0.75);
     endShape(CLOSE);
   }
 
+/*
+ Function: propel
+ Purpose: Propels ship in current towards direction's heading, capable of reversing too.
+ Inputs: None.
+ Outputs: None.
+ */  
   void propel() {
+    
     PVector thrust = direction.copy();
     if (sUP) {
-      thrust.setMag(thrustFactor);//accelerate
+      //forwards
+      thrust.setMag(thrustFactor);
     }
     if (sDOWN) {
-      thrust.setMag(-thrustFactor);//reverse
+      //reverse
+      thrust.setMag(-thrustFactor);
     }
     acceleration.div(mass);
     acceleration.add(thrust);
   }
-
+  
+/*
+ Function: edgeCheck
+ Purpose: Calls mapEdgeWrap(), wrapping ship location if exceeding bounds.
+ Inputs: None
+ Outputs: None
+ */  
   void edgeCheck() {
+    
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
   }
 
-  //determines direction/heading
+/*
+ Function: getDirection
+ Purpose: Returns a PVector with it's x & y coordinates adjusted for direction.
+ Inputs: PVector and directional heading.
+ Outputs: PVector with updated direction.
+ */  
   PVector getDirection(PVector vector, float heading) {
+    
     vector.x = location.mag() * cos(heading);
     vector.y = location.mag() * sin(heading);
     return vector;
   }
 
-  //Adds a new projectile
+/*
+ Function: shoot
+ Purpose: Call shootSound.trigger() for sound, creates a projectile object.
+ Inputs: None.
+ Outputs: None.
+ */  
   void shoot() {
     
     shootSound.trigger();
@@ -853,6 +931,7 @@ void levelUp() {
  Outputs: None.
  */
 void gameOver() {
+  updateScores(aScoreBoard.score);
   gameScreen = 3;
 }
 
@@ -963,6 +1042,73 @@ void lifeEnd() {
   }
 }
 
+void updateScores(int score) {
+  for (int i=0; i < highscores.length; i++) {
+    if (highscores[i] < score) {
+      highscores[i]=score;
+      playerName[i]=nameEntry();
+      break;
+    }
+  }
+}
+
+String nameEntry(){
+  String entry = "";
+  kbEntry=true;
+  //will code some way for highscorer to input there name  
+  kbEntry=false;
+  return(entry);
+}
+
+void readInScores() {
+  boolean noFile =false;
+   try {
+    values = loadJSONArray("highscores.json");
+  } catch (NullPointerException e) {
+    noFile=true;
+  }finally{    
+    if (noFile){
+      saveScores();
+    }else{
+      for (int i = 0; i < values.size(); i++) {
+        JSONObject entry = values.getJSONObject(i);
+        highscores[i] = entry.getInt("highscore");
+        playerName[i] = entry.getString("name");
+      //println(highscores[i] + ", " + playerName[i]);
+      }   
+    }
+  }
+}
+
+/*
+ Function: saveScores
+ Purpose: Stores highscores in a json file
+ Inputs: None.
+ Outputs: None.
+ */
+void saveScores() {
+  println(highscores);
+  values = new JSONArray();
+  for (int i = 0; i < highscores.length; i++) {
+    JSONObject entry = new JSONObject();
+    entry.setInt("number", i);
+    entry.setInt("highscore", highscores[i]);
+    entry.setString("name", playerName[i]);
+    values.setJSONObject(i, entry);
+  }
+  saveJSONArray(values, "data/highscores.json");
+}
+
+/*
+ Function: exit
+ Purpose: Inbuilt function to be called upon program exit
+ Inputs: None.
+ Outputs: None.
+ */
+void exit() {
+  saveScores();  
+}
+
 void mousePressed() {
   // if we are on the initial screen when clicked, start the game 
   if (gameScreen == 0) { 
@@ -979,41 +1125,45 @@ void mousePressed() {
 }
 
 void keyPressed() {
-
-  if (key == 'p' && gameScreen == 1) {
-    gameScreen = 4;
-  } else if (key == 'p' && gameScreen == 4) {
-    gameScreen = 1;
-  }
-  //added arrow keys for movement
-  if (key== 'w'|| keyCode==UP) {
-    sUP=true;
-  }
-  if (key=='s' || keyCode==DOWN) {
-    sDOWN=true;
-  }
-  if (key=='d' || keyCode==RIGHT) {
-    sRIGHT=true;
-  }
-  if (key=='a'|| keyCode==LEFT) {
-    sLEFT=true;
+  //when highscorer types name, prevent's funky behaviour
+  if (!kbEntry){
+    if (key == 'p' && gameScreen == 1) {
+      gameScreen = 4;
+    } else if (key == 'p' && gameScreen == 4) {
+      gameScreen = 1;
+    }
+    //added arrow keys for movement
+    if (key== 'w'|| keyCode==UP) {
+      sUP=true;
+    }
+    if (key=='s' || keyCode==DOWN) {
+      sDOWN=true;
+    }
+    if (key=='d' || keyCode==RIGHT) {
+      sRIGHT=true;
+    }
+    if (key=='a'|| keyCode==LEFT) {
+      sLEFT=true;
+    }
   }
 }
 
 void keyReleased() {
-  if (key== 'w'||keyCode==UP) {
-    sUP=false;
-  }
-  if (key=='s'|| keyCode==DOWN) {
-    sDOWN=false;
-  }
-  if (key=='d'||keyCode==RIGHT) {
-    sRIGHT=false;
-  }
-  if (key=='a'||keyCode==LEFT) {
-    sLEFT=false;
-  }
-  if (key=='l'||key==' ' && gameScreen != 2) {//added spacebar for shooting
-    sSHOOT=true;
-  }
+  if (!kbEntry){
+    if (key== 'w'||keyCode==UP) {
+      sUP=false;
+    }
+    if (key=='s'|| keyCode==DOWN) {
+      sDOWN=false;
+    }
+    if (key=='d'||keyCode==RIGHT) {
+      sRIGHT=false;
+    }
+    if (key=='a'||keyCode==LEFT) {
+      sLEFT=false;
+    }
+    if (key=='l'||key==' ' && gameScreen != 2) {
+      sSHOOT=true;
+    }
+  }    
 }
