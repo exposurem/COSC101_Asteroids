@@ -889,7 +889,8 @@ void gameOverScreen() {
   textSize(100);
   fill(255, 255, 255);
   textAlign(CENTER);
-  text("Game Over", width/2, 150); 
+  text("Game Over", width/2, 150);
+  displayHighScores();
   textSize(25);
   fill(255, 255, 255);
   textAlign(CENTER);
@@ -1003,6 +1004,7 @@ void levelUp() {
  */
 void gameOver() {
   updateScores(aScoreBoard.score);
+  saveScores();
   gameScreen = 3;
 }
 
@@ -1115,42 +1117,61 @@ void lifeEnd() {
 }
 
 void updateScores(int score) {
-  for (int i=0; i < highscores.length; i++) {
-    if (highscores[i] < score) {
-      highscores[i]=score;
-      playerName[i]=nameEntry();
-      break;
+  String name ="";
+  for (int i =0; i<highscores.length; i++){
+    if (highscores[i] < score){
+      int tempScore = highscores[i];
+      highscores[i] = score;
+      score = tempScore;
+      String tempName = playerName[i];
+      playerName[i]=nameEntry(name,i+1);      
+      name = tempName;        
     }
   }
 }
 
-String nameEntry(){
-  String entry = "";
-  kbEntry=true;
-  //will code some way for highscorer to input there name  
-  kbEntry=false;
-  return(entry);
+void displayHighScores() {
+  textSize(20);
+  fill(255, 255, 255);
+  textAlign(LEFT);
+  float column =width/3.4; //make more dynamic.
+  int horizontalSpacing = 75;
+  int verticalSpacing =20;
+  //change to dynamically space for long names 
+  //something like: column+horizontalSpace+playerName[i].length()
+  for (int i=0; i<highscores.length; i++) {
+    if (highscores[i]!=0){
+      text("Rank:"+(i+1), column, (height/4)+(i*verticalSpacing));
+      text("Name:" +playerName[i], column+horizontalSpacing, (height/4)+(i*verticalSpacing));
+      text("Score:" +highscores[i], column+horizontalSpacing*2.8, (height/4)+(i*verticalSpacing));
+    }
+  }
+}
+
+String nameEntry(String entry,int count) {
+  //String entry = "";
+  if (entry=="" || entry==null) {
+    kbEntry=true;
+    entry="Player" +str(count);//temporary
+    kbEntry=false;
+    return entry;
+  } else {   
+    return(entry);
+  }
 }
 
 void readInScores() {
-  boolean noFile =false;
-   try {
-    values = loadJSONArray("highscores.json");
-  } catch (NullPointerException e) {
-    noFile=true;
-  }finally{    
-    if (noFile){
-      saveScores();
-    }else{
-      for (int i = 0; i < values.size(); i++) {
-        JSONObject entry = values.getJSONObject(i);
-        highscores[i] = entry.getInt("highscore");
-        playerName[i] = entry.getString("name");
-      //println(highscores[i] + ", " + playerName[i]);
-      }   
+  File temp = new File(dataPath("highscores.json")); 
+  if (temp.exists()) {
+    values = loadJSONArray(temp);    
+    for (int i = 0; i < values.size(); i++) {
+      JSONObject entry = values.getJSONObject(i);
+      highscores[i] = entry.getInt("Highscore");
+      playerName[i] = entry.getString("Name");
     }
   }
 }
+
 
 /*
  Function: saveScores
@@ -1159,13 +1180,12 @@ void readInScores() {
  Outputs: None.
  */
 void saveScores() {
-  println(highscores);
   values = new JSONArray();
   for (int i = 0; i < highscores.length; i++) {
     JSONObject entry = new JSONObject();
-    entry.setInt("number", i);
-    entry.setInt("highscore", highscores[i]);
-    entry.setString("name", playerName[i]);
+    entry.setInt("Rank", i+1);
+    entry.setInt("Highscore", highscores[i]);
+    entry.setString("Name", playerName[i]);
     values.setJSONObject(i, entry);
   }
   saveJSONArray(values, "data/highscores.json");
