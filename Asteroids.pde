@@ -40,6 +40,8 @@ int gameScreen = 0;
 int playerLives = 3;
 // Number of alien ships.
 int aliens = 1;
+// Ranmdom timer for appearance of alien ship.
+float timer = random(10000);
 // Speed setting for asteroids.
 float asteroidSpeed = 1; 
 // Distance bullets travel before being removed.
@@ -123,7 +125,6 @@ void draw() {
   } else if (gameScreen == 5) {
     deathScreen();
   }
-  
 }
 
 /*
@@ -154,7 +155,7 @@ void updateAndDrawProjectiles() {
  Outputs: None.
  */
 void createAsteroid(int asteroidLife) {
-  
+
   PVector location = new PVector(random(random(0, 100)), random(width-100, width), random(height));
   PVector velocity = new PVector(random(-2, 2), random(-2, 2));
   int shape = chooseShape(shapeLength);
@@ -164,16 +165,16 @@ void createAsteroid(int asteroidLife) {
 /*
  Function: splitAsteroid
  Purpose: When an asteroid with 3 or 2 hits reamining is destroyed, this function splits the asteroid into two smaller ones 
-          with hits-1 remaining.
+ with hits-1 remaining.
  Inputs: The asteroid object which was hit by a projectile with more than 1 life remaining.
  Outputs: None.
  */
 void splitAsteroid(Asteroid asteroid ) {
-  
+
   asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
-  random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed),
-  random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+    random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
+    random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
 }
 
 /*
@@ -214,12 +215,12 @@ PVector mapEdgeWrap(PVector object, float radius) {
 /*
 Function: chooseShape
  Purpose: A utility function to provide a random number between 0 the int shapeLength which defines how many randomly
-          shaped asteroid types there are to draw.
+ shaped asteroid types there are to draw.
  Inputs: An integer configuration setting.
  Outputs: An integer between 0 and shapeLength
  */
 int chooseShape(int shapeLength) {
-  
+
   int number = int(random(0, shapeLength));
   return number;
 }
@@ -229,7 +230,7 @@ int chooseShape(int shapeLength) {
  Purpose: Set's value of Ship object parameter's, called upon game start & restart following a game over.
  Inputs: None.
  Outputs: None.
- */  
+ */
 void shipStartSettings() {
   shipFriction = 0.995;
   shipThrustFact = 0.15;
@@ -243,7 +244,7 @@ void shipStartSettings() {
  Purpose: Generate's a ship object, along with value's defining variable's for each instance. Update's ship movement & rotation.
  Inputs: None.
  Functions: updatePos, display, drawShip, drawExhaust, propel, edgeCheck, getDirection, shoot.
- */  
+ */
 class Ship {
 
   PVector location, direction, noseLocation, acceleration, velocity;
@@ -251,9 +252,9 @@ class Ship {
   float turnFactor, heading; 
   float resistance, mass, thrustFactor, maxSpeed;
 
-  
+
   Ship(float friction, float thrusting, float maxSpd, float radius, float mass, float turningArc) {
-    
+
     // Ship resistance; lower = more.
     this.resistance=friction;
     // Ship mass.
@@ -277,13 +278,13 @@ class Ship {
     heading = -HALF_PI;
     direction = PVector.fromAngle(heading);
   }
-  
-/*
+
+  /*
  Function: updatePos
- Purpose: Update's location, heading and velocity of PVector's, call's keypress functions.
- Inputs: None.
- Outputs: None.
- */    
+   Purpose: Update's location, heading and velocity of PVector's, call's keypress functions.
+   Inputs: None.
+   Outputs: None.
+   */
   void updatePos() {
     xPos=location.x;
     yPos=location.y;
@@ -316,14 +317,14 @@ class Ship {
     }
   }
 
-/*
+  /*
  Function: display
- Purpose: Using a matrix at current x & y coord's, rotates and displays via drawShip().
- Inputs: None.
- Outputs: None.
- */  
+   Purpose: Using a matrix at current x & y coord's, rotates and displays via drawShip().
+   Inputs: None.
+   Outputs: None.
+   */
   void display() {
-    
+
     pushMatrix();
     translate(location.x, location.y);
     rotate(heading+HALF_PI);
@@ -339,14 +340,14 @@ class Ship {
     stroke(255);
   }
 
-/*
+  /*
  Function: drawShip
- Purpose: Draw's vertex ship at current location, based on isosceles triangle.
- Inputs: None.
- Outputs: None.
- */  
+   Purpose: Draw's vertex ship at current location, based on isosceles triangle.
+   Inputs: None.
+   Outputs: None.
+   */
   void drawShip() {
-    
+
     stroke(255);
     beginShape();
     vertex(0, -radius);//top
@@ -356,14 +357,14 @@ class Ship {
     endShape(CLOSE);
   }
 
-/*
+  /*
  Function: drawExhaust
- Purpose: Draw's flame for ship while propelling forwards.
- Inputs: None
- Outputs: None.
- */  
+   Purpose: Draw's flame for ship while propelling forwards.
+   Inputs: None
+   Outputs: None.
+   */
   void drawExhaust() {
-    
+
     stroke(255);
     beginShape();
     vertex(0, radius/2.0);
@@ -373,14 +374,14 @@ class Ship {
     endShape(CLOSE);
   }
 
-/*
+  /*
  Function: propel
- Purpose: Propels ship in current towards direction's heading, capable of reversing too.
- Inputs: None.
- Outputs: None.
- */  
+   Purpose: Propels ship in current towards direction's heading, capable of reversing too.
+   Inputs: None.
+   Outputs: None.
+   */
   void propel() {
-    
+
     PVector thrust = direction.copy();
     if (sUP) {
       //forwards
@@ -393,40 +394,40 @@ class Ship {
     acceleration.div(mass);
     acceleration.add(thrust);
   }
-  
-/*
+
+  /*
  Function: edgeCheck
- Purpose: Calls mapEdgeWrap(), wrapping ship location if exceeding bounds.
- Inputs: None
- Outputs: None
- */  
+   Purpose: Calls mapEdgeWrap(), wrapping ship location if exceeding bounds.
+   Inputs: None
+   Outputs: None
+   */
   void edgeCheck() {
-    
+
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
   }
 
-/*
+  /*
  Function: getDirection
- Purpose: Returns a PVector with it's x & y coordinates adjusted for direction.
- Inputs: PVector and directional heading.
- Outputs: PVector with updated direction.
- */  
+   Purpose: Returns a PVector with it's x & y coordinates adjusted for direction.
+   Inputs: PVector and directional heading.
+   Outputs: PVector with updated direction.
+   */
   PVector getDirection(PVector vector, float heading) {
-    
+
     vector.x = location.mag() * cos(heading);
     vector.y = location.mag() * sin(heading);
     return vector;
   }
 
-/*
+  /*
  Function: shoot
- Purpose: Call shootSound.trigger() for sound, creates a projectile object.
- Inputs: None.
- Outputs: None.
- */  
+   Purpose: Call shootSound.trigger() for sound, creates a projectile object.
+   Inputs: None.
+   Outputs: None.
+   */
   void shoot() {
-    
+
     shootSound.trigger();
     projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag()));
   }
@@ -465,7 +466,7 @@ void drawShapes() {
 Class: Asteroid
  Purpose: To generate an asteroid object.
  Inputs: PVectors for the location and direction of the asteroid. Ints for random
-         shape generation and determination of asteroid size.
+ shape generation and determination of asteroid size.
  Functions: drawAsteroid, move, xPos, yPos, hitsLeft, aRadius, hits.
  */
 class Asteroid {
@@ -481,7 +482,7 @@ class Asteroid {
   int shape;
   boolean show = true;
   int speed = 3;
-  
+
   PShape alienShip;
   // Initialise.
   Asteroid(PVector location, PVector velocity, int hitsLeft, int shape) {
@@ -490,65 +491,76 @@ class Asteroid {
     this.hitsLeft = hitsLeft;
     this.shape = shape;
   }
-  
+
   Asteroid(PVector location, PVector velocity) {
     this.location = location;
     this.velocity = velocity;
   }
 
-/*
+  /*
  Function: drawAsteroid
- Purpose: Draw each Asteroid to the screen at the appropriate size.
- Inputs: PShape of randomly generated asteroid.
- Outputs: None.
- */
+   Purpose: Draw each Asteroid to the screen at the appropriate size.
+   Inputs: PShape of randomly generated asteroid.
+   Outputs: None.
+   */
   void drawAsteroid(PShape shapes) {
-    
+
     if (hitsLeft == 3) {
       shape(shapes, location.x, location.y, radius*3, radius*3);
     } else if (hitsLeft == 2) {
       shape(shapes, location.x, location.y, radius*2, radius*2);
     } else if (hitsLeft == 1) {
       shape(shapes, location.x, location.y, radius, radius);
-    } 
-  }
-  
-  void drawAlien(){
-    
-    if(show == true){
-    noFill();
-    ellipse(location.x , location.y, radius/2, radius/2);
     }
   }
-  
-  void showAlien(){
-    
-   show = false; 
+
+  void drawAlien() {
+
+    if (show == true) {
+      noFill();
+      stroke(255);
+      beginShape();
+      alienShip = createShape();
+      alienShip.beginShape();
+      alienShip.vertex(-10, 10);//bottom right
+      alienShip.vertex(0, 0); //centre
+      alienShip.vertex(20, 0);//bottom left
+      alienShip.vertex(30, 10);//bottom middle
+      alienShip.vertex(20, 20);//bottom right
+      alienShip.vertex(0, 20);//bottom right
+      alienShip.vertex(-10, 10);//bottom right
+      alienShip.vertex(30, 10);//bottom middle
+      shape(alienShip, location.x, location.y);
+    }
   }
-  
-  void randomAlien(){
-    
+
+  void showAlien() {
+
+    show = false;
+  }
+
+  void randomAlien() {
+
     location.add(velocity);
-    if(location.y > 550){
-     velocity.y = -3;
-   } 
-   if (location.y < 275){
-     velocity.y = 3;
-   }
-    
+    if (location.y > 550) {
+      velocity.y = -3;
+    } 
+    if (location.y < 275) {
+      velocity.y = 3;
+    }
   }
-    
-    
+
+
 
   // Handles asteroid movement and boundary checking.
-/*
+  /*
  Function: move
- Purpose: Handles asteroid movement and boundary checking.
- Inputs: None.
- Outputs: None.
- */  
+   Purpose: Handles asteroid movement and boundary checking.
+   Inputs: None.
+   Outputs: None.
+   */
   void move() {
-    
+
     location.add(velocity);    
     if (location.x > width) {
       location.x = 0;
@@ -562,47 +574,47 @@ class Asteroid {
     }
   }
 
-/*
+  /*
  Function: xPos
- Purpose: Returns x coordinate of Asteroid.
- Inputs: None.
- Outputs: x coordinate.
- */    
+   Purpose: Returns x coordinate of Asteroid.
+   Inputs: None.
+   Outputs: x coordinate.
+   */
   float xPos() {
-    
+
     return location.x;
   }
 
-/*
+  /*
  Function: yPos
- Purpose: Returns y coordinate of Asteroid.
- Inputs: None.
- Outputs: y coordinate.
- */
+   Purpose: Returns y coordinate of Asteroid.
+   Inputs: None.
+   Outputs: y coordinate.
+   */
   float yPos() {
-    
+
     return location.y;
   }
 
-/*
+  /*
  Function: hitsLeft
- Purpose: Subtracts a point from the asteroids life.
- Inputs: None.
- Outputs: None.
- */  
+   Purpose: Subtracts a point from the asteroids life.
+   Inputs: None.
+   Outputs: None.
+   */
   void hitsLeft() {
-    
+
     hitsLeft--;
   }
 
-/*
+  /*
  Function: aRadius
- Purpose: Sets radius of the asteroid according to the number of hitsLeft.
- Inputs: None.
- Outputs: Returns the appropriate radius.
- */
+   Purpose: Sets radius of the asteroid according to the number of hitsLeft.
+   Inputs: None.
+   Outputs: Returns the appropriate radius.
+   */
   float aRadius() {
-    
+
     if (hitsLeft == 3) {
       return (radius*3)/2;
     } else if (hitsLeft == 2) {
@@ -610,14 +622,14 @@ class Asteroid {
     } else return radius/2;
   }
 
-/*
+  /*
  Function: hits
- Purpose: Returns current number of hits asteroid can sustain.
- Inputs: None.
- Outputs: Returns the number of hits left.
- */
+   Purpose: Returns current number of hits asteroid can sustain.
+   Inputs: None.
+   Outputs: Returns the number of hits left.
+   */
   int hits() {
-    
+
     return hitsLeft;
   }
 }
@@ -625,11 +637,11 @@ class Asteroid {
  Class: Projectile
  Purpose: A class for the projectile objects.
  Inputs: PVectors representing the ship's current location and direction, an integer for the projectile speed,
-         and floats for the projectile's maximum distance it can travel and its magnitude.
+ and floats for the projectile's maximum distance it can travel and its magnitude.
  Methods: move and display.
  */
 class Projectile {
-  
+
   PVector blocation = new PVector(), direction = new PVector(), velocity;
   float  distanceTravelled, maxDistance;
   int speed;
@@ -649,12 +661,12 @@ class Projectile {
     this.velocity = new PVector();
     this.magnitude = mag;
   }
-  
- /*
+
+  /*
   Method Purpose: To move the projectile on the screen, also adds the ship's velocity when fired.
-  Inputs: None.
-  Outputs: None.
-  */
+   Inputs: None.
+   Outputs: None.
+   */
   void move() {
     //Adds the ship's current velocity to the projectiles.
     velocity.setMag(magnitude);  
@@ -663,12 +675,12 @@ class Projectile {
     blocation.add(velocity);
     distanceTravelled +=velocity.mag();
   }
-  
- /*
+
+  /*
   Method Purpose: To draw the projectile.
-  Inputs: None.
-  Outputs: None.
-  */
+   Inputs: None.
+   Outputs: None.
+   */
   void display() {
 
     ellipse(blocation.x, blocation.y, 5, 5);
@@ -682,23 +694,23 @@ class Projectile {
  Methods: update, reset, drawMe.
  */
 class ScoreBoard {
-  
+
   int score;
   float xPos;
   float yPos;
 
   ScoreBoard(float xPos, float yPos) {
-    
+
     this.score = 0; 
     this.xPos = xPos;
     this.yPos = yPos;
   }
-  
- /*
+
+  /*
   Method Purpose: Updates the score.
-  Inputs: An integer representing the amount of hits left the asteroid destoryed had.
-  Outputs: None.
-  */
+   Inputs: An integer representing the amount of hits left the asteroid destoryed had.
+   Outputs: None.
+   */
   void update(int hitsLeft) {
     //Awards more points for hitting a smaller size asteroid.
     switch(hitsLeft) {
@@ -714,21 +726,21 @@ class ScoreBoard {
     }
   }
 
- /*
+  /*
   Method Purpose: Resets the score.
-  Inputs: None.
-  Outputs: None.
-  */
+   Inputs: None.
+   Outputs: None.
+   */
   void reset() {
-    
+
     score = 0;
   }
-  
- /*
+
+  /*
   Method Purpose: Display the current score.
-  Inputs: None.
-  Outputs: None.
-  */
+   Inputs: None.
+   Outputs: None.
+   */
   void drawMe() {
     textSize(20);
     fill(255, 255, 255);
@@ -744,7 +756,12 @@ class ScoreBoard {
  Outputs: None.
  */
 void detectCollisions() {
-  
+  //Check if the asteroids and alien ship have been destroyed.
+  if (killCount == numberAsteroids*7 && aliens == 0) {
+    levelUp();
+    nextLevel();
+    killCount = 0;
+  } 
   for (int i = asteroids.size()-1; i >= 0; i--) {
     Asteroid asteroid = asteroids.get(i);
     //Call the circle collision detection function between the players ship and the current asteroid object.
@@ -756,15 +773,11 @@ void detectCollisions() {
     for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
       //Found a collision between the current asteroid and projectile.
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())){
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
         //Call functions and perform actions to handle the collision event
         handleAsteroidCollision(asteroid, i, j);
         //Check if all of the asteroids have been destroyed.
-        if (killCount == numberAsteroids*7 && aliens == 0) {
-          levelUp();
-          nextLevel();
-          killCount = 0;
-        }
+
         //Split into new asteroids.
         if (asteroid.hits() >0) {
           splitAsteroid(asteroid);
@@ -775,20 +788,21 @@ void detectCollisions() {
   }
 }
 
-void alienCollison(){
-  if (aliens == 1){
-  if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())) {
-    lifeEnd();
-    alienShip.showAlien();
-  }
-  for (int j=projectiles.size()-1; j >= 0; j--) {
-    Projectile bullet = projectiles.get(j);
-    if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())){
+void alienCollison() {
+  if (aliens == 1) {
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())) {
+      lifeEnd();
       alienShip.showAlien();
-      aliens = 0;
-      projectiles.remove(j);
     }
-  }
+    for (int j=projectiles.size()-1; j >= 0; j--) {
+      Projectile bullet = projectiles.get(j);
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())) {
+        alienShip.showAlien();
+        aScoreBoard.score += asteroidOnePoints;
+        aliens = 0;
+        projectiles.remove(j);
+      }
+    }
   }
 }
 
@@ -799,7 +813,7 @@ void alienCollison(){
  Outputs: None.
  */
 void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId) {
-  
+
   explosionSound.trigger();
   aScoreBoard.update(asteroid.hitsLeft);
   projectiles.remove(projectileId);
@@ -846,9 +860,11 @@ void gamePlayScreen() {
     asteroid.move();
     asteroid.drawAsteroid(shapes[asteroid.shape]);
   }
+  if (millis() > timer){
   alienShip.drawAlien();
   alienShip.move();
   alienShip.randomAlien();
+  }
   aScoreBoard.drawMe();
   livesDisplay();
   detectCollisions();
@@ -874,7 +890,7 @@ void levelScreen() {
   textAlign(CENTER);
   text(("Level - " + level), width/2, height/2);
   textSize(25);
-  text("Click mouse to continue.", width/2, height*0.9); 
+  text("Click mouse to continue.", width/2, height*0.9);
 }
 
 
@@ -901,6 +917,7 @@ void gameOverScreen() {
   text("Your score was: " + aScoreBoard.score, width/2, 650);
   level = 1;
   aliens = 1;
+  timer = millis() + random(10000);
   numberAsteroids = level;
 }
 
@@ -944,6 +961,7 @@ void deathScreen() {
   alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   killCount = 0;
   aliens = 1;
+  timer = millis() + random(10000);
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   numberAsteroids = level;
   for (int i = 0; i < numberAsteroids; i++) { 
@@ -968,6 +986,7 @@ void nextLevel() {
   alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   resetArrayLists();
   aliens = 1;
+  timer = millis() + random(10000);
   level++;
   asteroidSpeed+= 0.5;
   numberAsteroids = level;
@@ -1118,14 +1137,14 @@ void lifeEnd() {
 
 void updateScores(int score) {
   String name ="";
-  for (int i =0; i<highscores.length; i++){
-    if (highscores[i] < score){
+  for (int i =0; i<highscores.length; i++) {
+    if (highscores[i] < score) {
       int tempScore = highscores[i];
       highscores[i] = score;
       score = tempScore;
       String tempName = playerName[i];
-      playerName[i]=nameEntry(name,i+1);      
-      name = tempName;        
+      playerName[i]=nameEntry(name, i+1);      
+      name = tempName;
     }
   }
 }
@@ -1140,7 +1159,7 @@ void displayHighScores() {
   //change to dynamically space for long names 
   //something like: column+horizontalSpace+playerName[i].length()
   for (int i=0; i<highscores.length; i++) {
-    if (highscores[i]!=0){
+    if (highscores[i]!=0) {
       text("Rank:"+(i+1), column, (height/4)+(i*verticalSpacing));
       text("Name:" +playerName[i], column+horizontalSpacing, (height/4)+(i*verticalSpacing));
       text("Score:" +highscores[i], column+horizontalSpacing*2.8, (height/4)+(i*verticalSpacing));
@@ -1148,7 +1167,7 @@ void displayHighScores() {
   }
 }
 
-String nameEntry(String entry,int count) {
+String nameEntry(String entry, int count) {
   //String entry = "";
   if (entry=="" || entry==null) {
     kbEntry=true;
@@ -1198,7 +1217,7 @@ void saveScores() {
  Outputs: None.
  */
 void exit() {
-  saveScores();  
+  saveScores();
 }
 
 void mousePressed() {
@@ -1218,7 +1237,7 @@ void mousePressed() {
 
 void keyPressed() {
   //when highscorer types name, prevent's funky behaviour
-  if (!kbEntry){
+  if (!kbEntry) {
     if (key == 'p' && gameScreen == 1) {
       gameScreen = 4;
     } else if (key == 'p' && gameScreen == 4) {
@@ -1241,7 +1260,7 @@ void keyPressed() {
 }
 
 void keyReleased() {
-  if (!kbEntry){
+  if (!kbEntry) {
     if (key== 'w'||keyCode==UP) {
       sUP=false;
     }
@@ -1257,5 +1276,5 @@ void keyReleased() {
     if (key=='l'||key==' ' && gameScreen != 2) {
       sSHOOT=true;
     }
-  }    
+  }
 }
