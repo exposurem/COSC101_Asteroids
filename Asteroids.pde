@@ -16,7 +16,7 @@ import ddf.minim.*;
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
 // For the pause screen.
 boolean paused;
-// For kepypressed/keyreleased behaviour.
+// For keypressed/keyreleased behaviour.
 boolean kbEntry;
 // Maximum number of largest asteroids on screen.
 int numberAsteroids = 1;
