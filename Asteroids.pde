@@ -8,6 +8,7 @@
  Resource Credits
  Asteroid explosion - https://freesound.org/people/runningmind/sounds/387857/ 
  Shooting sound - https://freesound.org/people/alphatrooper18/sounds/362420/
+ Ship Explosion - https://freesound.org/people/cabled_mess/sounds/350972/
  */
 
 // Import processing.sound.*;
@@ -54,6 +55,9 @@ float shipMaxSpd;
 float shipSize;
 float shipTurnArc =6;
 float shipMass = 1;
+float asteroidVolume = 1.5;
+float shootVolume = 1;
+float shipExplosionVolume = 1;
 // Store the currently generated random shape.
 PShape randomShape;
 // Array of randomly generated shapes.
@@ -77,10 +81,11 @@ ScoreBoard aScoreBoard;
 //SoundFile shootSound;
 Minim soundOne;
 Minim soundTwo;
+Minim soundThree;
 AudioSample shootSound;
 AudioSample explosionSound;
-AudioInput inputOne;
-AudioInput inputTwo;
+AudioSample shipExplosion;
+
 
 void setup() {
   frameRate(60);
@@ -90,14 +95,15 @@ void setup() {
   alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   aScoreBoard = new ScoreBoard(400, 20);
-  //explosionSound = new SoundFile(this, "explosion.wav");
-  //shootSound = new SoundFile(this, "shooting.wav");
   soundOne = new Minim(this);
   soundTwo = new Minim(this);
+  soundThree = new Minim(this);
   shootSound = soundOne.loadSample("shooting.wav");
   explosionSound = soundTwo.loadSample("explosion.wav");
-  inputOne = soundOne.getLineIn();
-  inputTwo = soundTwo.getLineIn();
+  shipExplosion = soundThree.loadSample("shipexplosion.wav");
+  shootSound.setGain(shootVolume);
+  explosionSound.setGain(asteroidVolume);
+  shipExplosion.setGain(shipExplosionVolume);
 
   smooth(); 
   // Generate an array of random asteroid shapes.
@@ -771,6 +777,7 @@ void detectCollisions() {
     Asteroid asteroid = asteroids.get(i);
     //Call the circle collision detection function between the players ship and the current asteroid object.
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
+      shipExplosion.trigger();
       lifeEnd();
       break;
     }
@@ -802,6 +809,7 @@ void detectCollisions() {
 void alienCollison() {
   if (aliens == 1) {
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
+      shipExplosion.trigger();
       lifeEnd();
       alienShip.showAlien();
     }
