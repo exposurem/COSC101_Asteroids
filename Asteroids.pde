@@ -16,6 +16,7 @@ import ddf.minim.*;
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
 // For the pause screen.
 boolean paused;
+// For kepypressed/keyreleased behaviour.
 boolean kbEntry;
 // Maximum number of largest asteroids on screen.
 int numberAsteroids = 1;
@@ -175,9 +176,9 @@ void createAsteroid(int asteroidLife) {
  */
 void splitAsteroid(Asteroid asteroid ) {
 
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
+  asteroids.add(new Asteroid(new PVector(asteroid.location.x, asteroid.location.y), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
     random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
-  asteroids.add(new Asteroid(new PVector(asteroid.xPos(), asteroid.yPos()), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
+  asteroids.add(new Asteroid(new PVector(asteroid.location.x, asteroid.location.y), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
     random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
 }
 
@@ -566,28 +567,6 @@ class Asteroid {
   }
 
   /*
-   Function: xPos
-   Purpose: Returns x coordinate of Asteroid.
-   Inputs: None.
-   Outputs: x coordinate.
-   */
-  float xPos() {
-
-    return location.x;
-  }
-
-  /*
-   Function: yPos
-   Purpose: Returns y coordinate of Asteroid.
-   Inputs: None.
-   Outputs: y coordinate.
-   */
-  float yPos() {
-
-    return location.y;
-  }
-
-  /*
    Function: hitsLeft
    Purpose: Subtracts a point from the asteroids life.
    Inputs: None.
@@ -791,7 +770,7 @@ void detectCollisions() {
   for (int i = asteroids.size()-1; i >= 0; i--) {
     Asteroid asteroid = asteroids.get(i);
     //Call the circle collision detection function between the players ship and the current asteroid object.
-    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
       lifeEnd();
       break;
     }
@@ -799,7 +778,7 @@ void detectCollisions() {
     for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
       //Found a collision between the current asteroid and projectile.
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.xPos(), asteroid.yPos(), asteroid.aRadius())) {
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
         //Call functions and perform actions to handle the collision event
         handleAsteroidCollision(asteroid, i, j);
         //Check if all of the asteroids have been destroyed.
@@ -822,13 +801,13 @@ void detectCollisions() {
  */
 void alienCollison() {
   if (aliens == 1) {
-    if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())) {
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
       lifeEnd();
       alienShip.showAlien();
     }
     for (int j=projectiles.size()-1; j >= 0; j--) {
       Projectile bullet = projectiles.get(j);
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.xPos(), alienShip.yPos(), alienShip.aRadius())) {
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
         alienShip.showAlien();
         aScoreBoard.score += asteroidOnePoints;
         aliens = 0;
