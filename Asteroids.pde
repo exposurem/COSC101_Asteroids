@@ -15,10 +15,8 @@
 import ddf.minim.*;
 // Control key direction.
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
-// For the pause screen.
-boolean paused;
-// For keypressed/keyreleased behaviour.
-boolean kbEntry;
+// For keypressed of player name entry.
+boolean kbNameEntry;
 // Maximum number of largest asteroids on screen.
 int numberAsteroids = 1;
 // Game level.
@@ -70,6 +68,8 @@ ArrayList<Projectile> projectiles;
 String[] playerName = new String[5];
 int[] highscores = new int[5];//
 JSONArray values;
+// Entry to be added to playerName.
+String entry = "";
 
 // Alien ship as repurposed Asteroid object.
 Asteroid alienShip;
@@ -996,11 +996,21 @@ void deathScreen() {
  */
 void nextLevel() {
   //experiment with these figures
-  shipFriction -=0.001; //lower = more
-  shipMaxSpd -= 0.25;
-  shipThrustFact -=0.01;
-  shipSize +=2;
-  shipTurnArc+=0.5;//faster turning compensate slower speed
+  if (shipFriction>.985){
+    shipFriction -= 0.001;
+  }
+  if(shipMaxSpd > 8){
+    shipMaxSpd -= 0.2;
+  }
+  if(shipThrustFact > 0.10){
+    shipThrustFact -= 0.005;
+  }
+  if (shipSize < 25){
+    shipSize += 1.5;
+  }
+  if (shipTurnArc < 8){
+    shipTurnArc+=0.2;
+  }
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   resetArrayLists();
@@ -1097,6 +1107,7 @@ void resetArrayLists() {
 void resetConditions() {
   resetArrayLists();
   shipStartSettings();
+  entry="";
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
@@ -1161,14 +1172,17 @@ void lifeEnd() {
  Outputs: None.
  */
 void updateScores(int score) {
-  String name ="";
+  //set's new entry to empty string, to be filled out later
+  String name =""; 
   for (int i =0; i<highscores.length; i++) {
     if (highscores[i] < score) {
+      kbNameEntry = true;
+      // Updates score/name, shifts previous down a position.
       int tempScore = highscores[i];
       highscores[i] = score;
       score = tempScore;
       String tempName = playerName[i];
-      playerName[i]=nameEntry(name, i+1);      
+      playerName[i] = name;      
       name = tempName;
     }
   }
@@ -1176,49 +1190,63 @@ void updateScores(int score) {
 
 /*
  Function: displayHighScores
- Purpose: Display the high scores.
- Inputs: score.
+ Purpose: Display new and overall highscore's.
+ Inputs: None.
  Outputs: None.
  */
 void displayHighScores() {
   textSize(20);
-  fill(255, 255, 255);
+  fill(255);
   textAlign(LEFT);
-  float column =width/3.4; //make more dynamic.
-  int horizontalSpacing = 75;
-  int verticalSpacing =20;
-  //change to dynamically space for long names 
-  //something like: column+horizontalSpace+playerName[i].length()
-  for (int i=0; i<highscores.length; i++) {
-    if (highscores[i]!=0) {
-      text("Rank:"+(i+1), column, (height/4)+(i*verticalSpacing));
-      text("Name:" +playerName[i], column+horizontalSpacing, (height/4)+(i*verticalSpacing));
-      text("Score:" +highscores[i], column+horizontalSpacing*2.8, (height/4)+(i*verticalSpacing));
+  float columnOne = 0.25;
+  float columnTwo = 0.375;
+  float columnThree = 0.625;
+  int verticalSpacing = 20;
+  float textY =750;
+  if (kbNameEntry){
+    textAlign(CENTER);
+    String prompt = "New High Score! enter name:";
+    //float cursorPosition =textWidth(prompt+entry)+width/2;
+    float cursorX = width/2+(textWidth(prompt+entry)/2.0);
+    text(prompt+entry, width/2, textY);
+    line(cursorX,textY-textAscent(),cursorX,textY+textDescent());
+  }    
+  else{    
+    for (int i=0; i < highscores.length; i++) {
+      if (highscores[i] != 0) {
+        if (playerName[i] == ""){
+          playerName[i] = entry;
+        }        
+        text("Rank:"+(i+1), columnOne*width,(height/4)+(i*verticalSpacing));
+        text("Name:" +playerName[i], columnTwo*width, (height/4)+(i*verticalSpacing));
+        text("Score:" +highscores[i], columnThree*width, (height/4)+(i*verticalSpacing));
+      }    
     }
-  }
+  } 
 }
+
 
 /*
  Function: nameEntry
- Purpose: Handles player name entry.
- Inputs: entry, count.
- Outputs: entry.
+ Purpose: For each keypress, appends to entry.
+ Inputs: None.
+ Outputs: None.
  */
-String nameEntry(String entry, int count) {
-  //String entry = "";
-  if (entry=="" || entry==null) {
-    kbEntry=true;
-    entry="Player" +str(count);//temporary
-    kbEntry=false;
-    return entry;
-  } else {   
-    return(entry);
+void nameEntry() { 
+  if (key == ENTER|| key == RETURN && entry!="") {    
+    kbNameEntry = false;
+  } else if (key == BACKSPACE) {
+      if (entry.length() > 0) {
+        entry = entry.substring(0, entry.length()-1);
+    }
+  } else if ((entry.length() < 10) && (key>31) && (key!=CODED)) {
+      entry += key;
   }
 }
 
 /*
  Function: readInScores
- Purpose: Gets the current high scores.
+ Purpose: Gets the current high scores from json file.
  Inputs: None.
  Outputs: None.
  */
@@ -1263,60 +1291,65 @@ void exit() {
 }
 
 void mousePressed() {
-  // Decides which screen to dislay on mouse pressed based on current screen.
-  if (gameScreen == 0) { 
-    gameScreen = 2;
-  } else if (gameScreen == 2) {
-    gameScreen = 1;
-  } else if (gameScreen == 3) { 
-    resetConditions();
-    aScoreBoard.reset();
-    gameScreen = 2;
-  } else if (gameScreen == 5) {
-    gameScreen = 2;
+  // Until entry finished, no mouse events.
+  if(!kbNameEntry){
+    // Decides which screen to dislay on mouse pressed based on current screen.
+    if (gameScreen == 0) { 
+      gameScreen = 2;
+    } else if (gameScreen == 2) {
+      gameScreen = 1;
+    } else if (gameScreen == 3) { 
+      resetConditions();
+      aScoreBoard.reset();
+      gameScreen = 2;
+    } else if (gameScreen == 5) {
+      gameScreen = 2;
+    }
   }
 }
 
 void keyPressed() {
-  // When highscorer types name, prevent's funky behaviour.
-  if (!kbEntry) {
+  // Give's key precedent to name entry.
+  if (kbNameEntry) {
+    nameEntry();
+  }  
+  else{
     if (key == 'p' && gameScreen == 1) {
       gameScreen = 4;
     } else if (key == 'p' && gameScreen == 4) {
       gameScreen = 1;
     }
     //added arrow keys for movement
-    if (key== 'w'|| keyCode==UP) {
+    if (key == 'w'|| keyCode == UP) {
       sUP=true;
     }
-    if (key=='s' || keyCode==DOWN) {
+    if (key == 's' || keyCode == DOWN) {
       sDOWN=true;
     }
-    if (key=='d' || keyCode==RIGHT) {
+    if (key == 'd' || keyCode == RIGHT) {
       sRIGHT=true;
     }
-    if (key=='a'|| keyCode==LEFT) {
+    if (key == 'a'|| keyCode == LEFT) {
       sLEFT=true;
     }
   }
 }
 
+
 void keyReleased() {
-  if (!kbEntry) {
-    if (key== 'w'||keyCode==UP) {
-      sUP=false;
-    }
-    if (key=='s'|| keyCode==DOWN) {
-      sDOWN=false;
-    }
-    if (key=='d'||keyCode==RIGHT) {
-      sRIGHT=false;
-    }
-    if (key=='a'||keyCode==LEFT) {
-      sLEFT=false;
-    }
-    if (key=='l'||key==' ' && gameScreen != 2) {
-      sSHOOT=true;
-    }
+  if (key == 'w'||keyCode == UP) {
+    sUP=false;
+  }
+  if (key == 's'|| keyCode == DOWN) {
+    sDOWN=false;
+  }
+  if (key == 'd'||keyCode == RIGHT) {
+    sRIGHT=false;
+  }
+  if (key == 'a'||keyCode == LEFT) {
+    sLEFT=false;
+  }
+  if (key == 'l'||key == ' ' && gameScreen == 1) {
+    sSHOOT = true;
   }
 }
