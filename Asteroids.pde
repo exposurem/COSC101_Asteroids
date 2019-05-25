@@ -812,6 +812,17 @@ void detectCollisions() {
       handleAlienCollison();
       return;
     }
+    // If the alien ship is alive but there are no asteroids.
+    if(asteroids.size() == 0){
+      for (int j = projectiles.size()-1; j >= 0; j--){
+        Projectile bullet = projectiles.get(j);
+        if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
+          // Call function and perform actions to handle the collision event
+          handleAlienCollision(j);
+        }
+      }
+      
+    }
   }
   // Iterate through the asteroids arraylist to check for collisions.
   for (int i = asteroids.size()-1; i >= 0; i--) {
