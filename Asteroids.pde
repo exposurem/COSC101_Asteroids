@@ -806,7 +806,7 @@ void detectCollisions() {
     killCount = 0;
   }
   // Check if the alien ship exists check for a collision with the player ship.
-  if (aliens == 1) {
+  if (aliens == 1 && alienShip.show) {
     if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
       // Call function and perform actions to handle the collision event
       handleAlienCollison();
