@@ -345,7 +345,7 @@ class Ship {
     
     float bulletMag;
     // Add ship's velocity mag to bullet if moving forwards (relative to ship's heading).
-    if(sameMoveAndDir() == true){
+    if(sameMoveAndDir() || sUP){
       bulletMag = velocity.mag();  
     }
     // if moving backwards (relative) add 0.
