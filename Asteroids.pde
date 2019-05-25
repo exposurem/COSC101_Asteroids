@@ -128,7 +128,7 @@ void setup() {
     createAsteroid(asteroidLife);
   }
   projectiles = new ArrayList<Projectile>();
-  bulletMaxDistance = height*0.8;//move to settings class when made
+  bulletMaxDistance = height * 0.8;//move to settings class when made
   background(0);
 }
 
@@ -268,7 +268,7 @@ class Ship {
 
   /*
    Function: propel
-   Purpose: Propels ship in current towards direction's heading, capable of reversing too.
+   Purpose: Propels ship in direction of heading, capable of reversing too.
    Inputs: None.
    Outputs: None.
    */
@@ -289,7 +289,7 @@ class Ship {
 
   /*
    Function: edgeCheck
-   Purpose: Calls mapEdgeWrap(), wrapping ship location if exceeding bounds.
+   Purpose: Calls mapEdgeWrap(), wrapping ship location if exceeding map bounds.
    Inputs: None
    Outputs: None
    */
@@ -440,7 +440,7 @@ class Asteroid {
    */
   void move() {
 
-    location.add(velocity);    
+    location.add(velocity);
     // Boundary checking
     PVector checkedLocation = mapEdgeWrap(location, radius);
     location = checkedLocation;
@@ -500,7 +500,7 @@ class Projectile {
   float radius;
   float magnitude;
 
-  Projectile(PVector shipDirection, PVector shipLocation, int speed, float maxDistance, float mag) {
+  Projectile(PVector shipDirection, PVector shipLocation, int speed, float maxDistance, float magnitude) {
     this.speed = speed;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
     this.direction =shipDirection.copy();
@@ -509,7 +509,7 @@ class Projectile {
     this.maxDistance = maxDistance;
     this.distanceTravelled = 0;
     this.velocity = new PVector();
-    this.magnitude = mag;
+    this.magnitude = magnitude;
   }
 
   /*
@@ -987,9 +987,9 @@ void displayHighScores() {
   if (kbNameEntry){
     textAlign(CENTER);
     String prompt = "New High Score! enter name:";
-    //float cursorPosition =textWidth(prompt+entry)+width/2;
     float cursorX = width/2+(textWidth(prompt+entry)/2.0);
     text(prompt+entry, width/2, textY);
+    // Line to show cursor position.
     line(cursorX,textY-textAscent(),cursorX,textY+textDescent());
   }    
   else{    
@@ -1018,13 +1018,14 @@ void resetArrayLists() {
 }
 
 /*
- Function: readInScores
- Purpose: Gets the current high scores from json file.
+ Function: readInScores.
+ Purpose: Gets the current high scores from json file, stores in array's.
  Inputs: None.
  Outputs: None.
  */
 void readInScores() {
   File temp = new File(dataPath("highscores.json")); 
+  //Only loads if existing JSON file.
   if (temp.exists()) {
     values = loadJSONArray(temp);    
     for (int i = 0; i < values.size(); i++) {
@@ -1044,9 +1045,9 @@ void readInScores() {
 void shipStartSettings() {
   shipFriction = 0.995;
   shipThrustFact = 0.15;
-  shipMaxSpd = 10; 
+  shipMaxSpd = 10;
   shipSize = 15;
-  shipTurnArc =4;
+  shipTurnArc = 4;
 }
 
 /*
@@ -1183,16 +1184,6 @@ void death() {
 }
 
 /*
- Function: pauseScreen
- Purpose: Stop draw from runnning.
- Inputs: None.
- Outputs: None.
- */
-void pauseScreen() {
-  noLoop();
-}
-
-/*
  Function: resetConditions
  Purpose: Resets all game parameters, preparing for a fresh new game.
  Inputs: None.
@@ -1233,13 +1224,13 @@ void lifeEnd() {
 
 /*
  Function: updateScores
- Purpose: Updates player highscores.
+ Purpose: Updates local copy of player highscores.
  Inputs: score.
  Outputs: None.
  */
 void updateScores(int score) {
-  //set's new entry to empty string, to be filled out later
-  String name =""; 
+  // Sets new entry to empty string, to be filled out later.
+  String name = ""; 
   for (int i =0; i<highscores.length; i++) {
     if (highscores[i] < score) {
       kbNameEntry = true;
@@ -1261,12 +1252,12 @@ void updateScores(int score) {
  Outputs: None.
  */
 void nameEntry() { 
+  // Called for each keypress event, appends key to entry
   if (key == ENTER|| key == RETURN && entry!="") {    
     kbNameEntry = false;
-  } else if (key == BACKSPACE) {
-      if (entry.length() > 0) {
+  } else if (key == BACKSPACE && entry.length() > 0) {     
         entry = entry.substring(0, entry.length()-1);
-    }
+    // Ensure key entry is <=10, alphabetical characters.
   } else if ((entry.length() < 10) && (key>31) && (key!=CODED)) {
       entry += key;
   }
@@ -1280,6 +1271,8 @@ void nameEntry() {
  */
 void saveScores() {
   values = new JSONArray();
+  
+  // Goes through updated array, saving to JSON file.
   for (int i = 0; i < highscores.length; i++) {
     JSONObject entry = new JSONObject();
     entry.setInt("Rank", i+1);
@@ -1292,7 +1285,7 @@ void saveScores() {
 
 /*
  Function: exit
- Purpose: Inbuilt function to be called upon program exit
+ Purpose: Inbuilt function to be called upon program exit.
  Inputs: None.
  Outputs: None.
  */
@@ -1330,7 +1323,7 @@ void keyPressed() {
       gameScreen = 1;
     }
     //added arrow keys for movement
-    if (key == 'w'|| keyCode == UP) {
+    if (key == 'w' || keyCode == UP) {
       sUP=true;
     }
     if (key == 's' || keyCode == DOWN) {
@@ -1339,7 +1332,7 @@ void keyPressed() {
     if (key == 'd' || keyCode == RIGHT) {
       sRIGHT=true;
     }
-    if (key == 'a'|| keyCode == LEFT) {
+    if (key == 'a' || keyCode == LEFT) {
       sLEFT=true;
     }
   }
