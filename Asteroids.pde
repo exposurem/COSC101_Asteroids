@@ -311,7 +311,30 @@ class Ship {
     vector.y = location.mag() * sin(heading);
     return vector;
   }
-
+ 
+  /*
+   Function: sameMoveAndDir()
+   Purpose: Checks if ship is moving forwards (relative to ship heading).
+   Inputs: None
+   Outputs: True or False boolean
+   */  
+  boolean sameMoveAndDir(){
+    
+    if(heading < 0 && heading > -PI){
+      if(velocity.heading()>0 && velocity.heading() < PI){
+        return false;
+      }else{
+        return true;
+      }
+    }else{
+      if(velocity.heading()>0 && velocity.heading() < PI){
+        return true;
+      }else{
+        return false; 
+      }      
+    }    
+  }
+  
   /*
    Function: shoot
    Purpose: Call shootSound.trigger() for sound, creates a projectile object.
@@ -319,9 +342,19 @@ class Ship {
    Outputs: None.
    */
   void shoot() {
-
-  shootSound.trigger();
-  projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, velocity.mag()));
+    
+    float bulletMag;
+    // Add ship's velocity mag to bullet if moving forwards (relative to ship's heading).
+    if(sameMoveAndDir() == true){
+      bulletMag = velocity.mag();  
+    }
+    // if moving backwards (relative) add 0.
+    else{
+      bulletMag=0;  
+    }  
+    
+    shootSound.trigger();
+    projectiles.add(new Projectile(direction, noseLocation, 6, bulletMaxDistance, bulletMag));
   }
 }
 
