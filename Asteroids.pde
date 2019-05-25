@@ -812,7 +812,7 @@ void detectCollisions() {
       handleAlienCollison();
       return;
     }
-    // If the alien ship is alive but there are no asteroids.
+    // If the alien ship is alive but there are no asteroids. This statement only runs another loop through the projectile array if needed.
     if(asteroids.size() == 0){
       for (int j = projectiles.size()-1; j >= 0; j--){
         Projectile bullet = projectiles.get(j);
@@ -820,8 +820,7 @@ void detectCollisions() {
           // Call function and perform actions to handle the collision event
           handleAlienCollision(j);
         }
-      }
-      
+      } 
     }
   }
   // Iterate through the asteroids arraylist to check for collisions.
@@ -1204,6 +1203,7 @@ void resetConditions() {
   resetArrayLists();
   shipStartSettings();
   entry="";
+  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
