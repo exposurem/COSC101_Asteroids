@@ -1301,7 +1301,7 @@ void mousePressed() {
       gameScreen = 2;
     } else if (gameScreen == 2) {
       gameScreen = 1;
-    } else if (gameScreen == 3) { 
+    } else if (gameScreen == 3) {
       resetConditions();
       aScoreBoard.reset();
       gameScreen = 2;
@@ -1352,7 +1352,7 @@ void keyReleased() {
   if (key == 'a'||keyCode == LEFT) {
     sLEFT=false;
   }
-  if (key == 'l'||key == ' ' && gameScreen == 1) {
+  if ((key == 'l' && gameScreen ==1)||(key == ' ' && gameScreen==1)) {
     sSHOOT = true;
   }
 }
