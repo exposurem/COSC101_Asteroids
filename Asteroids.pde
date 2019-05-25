@@ -1,17 +1,28 @@
 /*
- * File: Assignmment_3.pde
+ * File: Asteroids.pde
  * Group: Group 29
  * Date: 06/05/2019
  * Course: COSC101 - Software Development Studio 1
- * Desc: Asteroids game
- * Usage: Make sure to run in the processing environment, have the Minim sound library installed and press play etc...
- Resource Credits
- Asteroid explosion - https://freesound.org/people/runningmind/sounds/387857/ 
- Shooting sound - https://freesound.org/people/alphatrooper18/sounds/362420/
- Ship Explosion - https://freesound.org/people/cabled_mess/sounds/350972/
+ * Desc: A remake of the classic Asteroids arcade game.
+ * Installation: Ensure the latest version of processing is installed (at least 3.5.3). Get it
+ *               from https://processing.org/download/.
+ *               After extracting the contents of this archive ensure the following files were
+ *               included:
+ *               \Asteroids.pde
+ *               \Data\explosion.wav
+ *               \Data\shipexplosion.wav
+ *               \Data\shooting.wav.
+ *               Install the Minim sound library through processing.
+ * Resource Credits:
+ * explosion.wav - https://freesound.org/people/runningmind/sounds/387857/ 
+ * shooting.wav - https://freesound.org/people/alphatrooper18/sounds/362420/
+ * shipexplosion.wav - https://freesound.org/people/cabled_mess/sounds/350972/
+ *
+ * Code Snippet Credits:
+ *
  */
-
-// Import processing.sound.*;
+ 
+// Minim sound library. 
 import ddf.minim.*;
 // Control key direction.
 boolean sUP, sDOWN, sRIGHT, sLEFT, sSHOOT;
@@ -49,10 +60,11 @@ float shipFriction;
 float shipThrustFact;
 // Top speed.
 float shipMaxSpd;
-//Ship radius.
+// Ship radius.
 float shipSize;
 float shipTurnArc =6;
 float shipMass = 1;
+// Volume control for sound effects.
 float asteroidVolume = 1.5;
 float shootVolume = 1;
 float shipExplosionVolume = 1;
@@ -77,8 +89,7 @@ Asteroid alienShip;
 Ship ship;
 // Scoreboard object.
 ScoreBoard aScoreBoard;
-//SoundFile explosionSound;
-//SoundFile shootSound;
+// Sound effect variables
 Minim soundOne;
 Minim soundTwo;
 Minim soundThree;
@@ -90,6 +101,7 @@ AudioSample shipExplosion;
 void setup() {
   frameRate(60);
   size(800, 800);
+  //Load high scores
   readInScores();
   shipStartSettings();
   alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
@@ -104,7 +116,6 @@ void setup() {
   shootSound.setGain(shootVolume);
   explosionSound.setGain(asteroidVolume);
   shipExplosion.setGain(shipExplosionVolume);
-
   smooth(); 
   // Generate an array of random asteroid shapes.
   drawShapes();
@@ -121,135 +132,6 @@ void setup() {
   background(0);
 }
 
-void draw() {
-  // Controls gameplay flow via screen selection.
-  if (gameScreen == 0) {
-    startScreen();
-  } else if (gameScreen == 1) {
-    gamePlayScreen();
-  } else if (gameScreen == 2) {
-    levelScreen();
-  } else if (gameScreen == 3) {
-    gameOverScreen();
-  } else if (gameScreen == 4) {
-    gamePauseScreen();
-  } else if (gameScreen == 5) {
-    deathScreen();
-  }
-}
-
-/*
- Function: updateAndDrawProjectiles
- Purpose: To remove projectiles if they have travelled their max distance, or move and display the projectiles.
- Inputs: None.
- Outputs: None.
- */
-void updateAndDrawProjectiles() {
-
-  for (int i = projectiles.size()-1; i >= 0; i--) { 
-    Projectile bullet = projectiles.get(i);
-    PVector checkedLocation = mapEdgeWrap(bullet.blocation, bullet.radius);
-    bullet.blocation = checkedLocation;
-    if (bullet.distanceTravelled >= bulletMaxDistance) {
-      projectiles.remove(i);
-    } else {
-      bullet.move();
-      bullet.display();
-    }
-  }
-}
-
-/*
- Function: createAsteroid
- Purpose: Creates a new asteroid object and adds it to the asteroid arraylist.
- Inputs: An integer representing the life (number of hits) of the asteroid.
- Outputs: None.
- */
-void createAsteroid(int asteroidLife) {
-
-  PVector location = new PVector(random(random(0, 100)), random(width-100, width), random(height));
-  PVector velocity = new PVector(random(-2, 2), random(-2, 2));
-  int shape = chooseShape(shapeLength);
-  asteroids.add(new Asteroid(location, velocity, asteroidLife, shape));
-}
-
-/*
- Function: splitAsteroid
- Purpose: When an asteroid with 3 or 2 hits reamining is destroyed, this function splits the asteroid into two smaller ones 
- with hits-1 remaining.
- Inputs: The asteroid object which was hit by a projectile with more than 1 life remaining.
- Outputs: None.
- */
-void splitAsteroid(Asteroid asteroid ) {
-
-  asteroids.add(new Asteroid(new PVector(asteroid.location.x, asteroid.location.y), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
-    random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
-  asteroids.add(new Asteroid(new PVector(asteroid.location.x, asteroid.location.y), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
-    random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
-}
-
-/*
- Function: circleCollision
- Purpose: To detect collisions between asteroids & bullets, and asteroids and the player ship using circular based collision detection.
- Inputs: Floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object(radOne, radTwo).
- Outputs: Boolean true if a collision is detected, false if none was.
- */
-boolean circleCollision(float xPos1, float yPos1, float radOne, float xPos2, float yPos2, float radTwo) {
-  //Is the centre of each object closer than their combined radii.
-  if (dist(xPos1, yPos1, xPos2, yPos2) < radOne + radTwo) {
-    return true;
-  }
-  return false;
-}
-
-/*
- Function: mapEdgeWrap
- Purpose: To detect if an object's PVector is leaving the screen bounds, and if so place them on the opposite side.
- Inputs: A PVector representing the object's location, and a float of the objects radius.
- Outputs: The original PVector if it is not leaving the screen, a modified PVector if it was leaving the screen.
- */
-PVector mapEdgeWrap(PVector object, float radius) {
-  //Checking left,right,top,bottom boundaries in order.
-  if (object.x < -radius) {
-    object.x = width+radius;
-  } else if (object.x > width+radius) {
-    object.x = -radius;
-  }
-  if (object.y <= -radius) {
-    object.y = height+radius;
-  } else if (object.y > height+radius) {
-    object.y = -radius;
-  }
-  return object;
-}
-
-/*
- Function: chooseShape
- Purpose: A utility function to provide a random number between 0 the int shapeLength which defines how many randomly
- shaped asteroid types there are to draw.
- Inputs: An integer configuration setting.
- Outputs: An integer between 0 and shapeLength
- */
-int chooseShape(int shapeLength) {
-
-  int number = int(random(0, shapeLength));
-  return number;
-}
-
-/*
- Function: shipStartSettings()
- Purpose: Set's value of Ship object parameter's, called upon game start & restart following a game over.
- Inputs: None.
- Outputs: None.
- */
-void shipStartSettings() {
-  shipFriction = 0.995;
-  shipThrustFact = 0.15;
-  shipMaxSpd = 10; 
-  shipSize = 15;
-  shipTurnArc =4;
-}
-
 /*
  Class: Ship
  Purpose: Generate's a ship object, along with value's defining variable's for each instance. Update's ship movement & rotation.
@@ -262,7 +144,6 @@ class Ship {
   float xPos, yPos, noseX, noseY, radius; 
   float turnFactor, heading; 
   float resistance, mass, thrustFactor, maxSpeed;
-
 
   Ship(float friction, float thrusting, float maxSpd, float radius, float mass, float turningArc) {
 
@@ -618,17 +499,16 @@ class Asteroid {
  Methods: move and display.
  */
 class Projectile {
-
+  // Location & Velocity PVectors.
   PVector blocation = new PVector(), direction = new PVector(), velocity;
+  // Max distance and distance travelled.
   float  distanceTravelled, maxDistance;
   int speed;
-  boolean visible;
   float radius;
   float magnitude;
 
   Projectile(PVector shipDirection, PVector shipLocation, int speed, float maxDistance, float mag) {
     this.speed = speed;
-    this.visible = true;
     this.blocation = blocation.set(shipLocation.x, shipLocation.y);
     this.direction =shipDirection.copy();
     this.direction.setMag(speed);
@@ -731,117 +611,21 @@ class ScoreBoard {
   }
 }
 
-/*
- Function: drawShapes
- Purpose: To fill an array with a series of randomly generates shapes that will be used for the asteroids.
- Inputs: None.
- Outputs: None.
- */
-void drawShapes() {
-  for (int i = 0; i < shapes.length; i++) {
-    noFill();
-    stroke(255);
-    shapeMode(CENTER);
-    randomShape = createShape();
-    randomShape.beginShape();
-    randomShape.vertex(50, 50);
-    randomShape.vertex(random(40, 60), random(0, 20));
-    randomShape.vertex(random(80, 100), random(5, 25));
-    randomShape.vertex(random(70, 90), random(30, 40));
-    randomShape.vertex(random(90, 110), random(25, 45));
-    randomShape.vertex(random(70, 90), random(70, 90));
-    randomShape.vertex(random(50, 50), random(65, 75));
-    randomShape.vertex(random(15, 25), random(70, 90));
-    randomShape.vertex(random(20, 40), random(40, 60));
-    randomShape.vertex(random(0, 20), random(30, 40));
-    randomShape.vertex(random(15, 35), random(5, 25));
-    randomShape.endShape(CLOSE);
-    shapes[i] = randomShape;
+void draw() {
+  // Controls gameplay flow via screen selection.
+  if (gameScreen == 0) {
+    startScreen();
+  } else if (gameScreen == 1) {
+    gamePlayScreen();
+  } else if (gameScreen == 2) {
+    levelScreen();
+  } else if (gameScreen == 3) {
+    gameOverScreen();
+  } else if (gameScreen == 4) {
+    gamePauseScreen();
+  } else if (gameScreen == 5) {
+    deathScreen();
   }
-}
-
-/*
- Function: detectCollisions
- Purpose: A function check and handle collisions between the asteroids, projectiles and ship.
- Inputs: None.
- Outputs: None.
- */
-void detectCollisions() {
-  //Check if the asteroids and alien ship have been destroyed.
-  if (killCount == numberAsteroids*7 && aliens == 0) {
-    levelUp();
-    nextLevel();
-    killCount = 0;
-  } 
-  for (int i = asteroids.size()-1; i >= 0; i--) {
-    Asteroid asteroid = asteroids.get(i);
-    //Call the circle collision detection function between the players ship and the current asteroid object.
-    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
-      shipExplosion.trigger();
-      lifeEnd();
-      break;
-    }
-    //No collisions with the players ship found, compare the current asteroid to the projectiles.
-    for (int j=projectiles.size()-1; j >= 0; j--) {
-      Projectile bullet = projectiles.get(j);
-      //Found a collision between the current asteroid and projectile.
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
-        //Call functions and perform actions to handle the collision event
-        handleAsteroidCollision(asteroid, i, j);
-        //Check if all of the asteroids have been destroyed.
-
-        //Split into new asteroids.
-        if (asteroid.hits() >0) {
-          splitAsteroid(asteroid);
-        }
-        break;
-      }
-    }
-  }
-}
-
-/*
- Function: alienCollision
- Purpose: Checks for collisions between alien ship, ship and projectiles.
- Inputs: None.
- Outputs: None.
- */
-void alienCollison() {
-  if (aliens == 1) {
-    if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
-      shipExplosion.trigger();
-      lifeEnd();
-      alienShip.showAlien();
-    }
-    for (int j=projectiles.size()-1; j >= 0; j--) {
-      Projectile bullet = projectiles.get(j);
-      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
-        alienShip.showAlien();
-        shipExplosion.trigger();
-        aScoreBoard.score += asteroidOnePoints;
-        aliens = 0;
-        projectiles.remove(j);
-      }
-    }
-  }
-}
-
-/*
- Function: handleAsteroidCollision
- Purpose: A function to handle a collision between an asteroid and a projectile.
- Inputs: The asteroid object, and two integers representing the position of the projectile and asteroid objects within their arraylists.
- Outputs: None.
- */
-void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId) {
-
-  explosionSound.trigger();
-  aScoreBoard.update(asteroid.hitsLeft);
-  projectiles.remove(projectileId);
-  //Remove the life remaining of the asteroid
-  asteroid.hitsLeft();
-  //Keep track of how many asteroids have been destroyed.
-  killCount++;
-  asteroids.remove(asteroidId);
 }
 
 /*
@@ -888,7 +672,6 @@ void gamePlayScreen() {
   aScoreBoard.drawMe();
   livesDisplay();
   detectCollisions();
-  alienCollison();
   ship.updatePos();
   ship.edgeCheck();
   ship.display();
@@ -986,6 +769,335 @@ void deathScreen() {
   for (int i = 0; i < numberAsteroids; i++) { 
     createAsteroid(asteroidLife);
   }
+}
+
+/*
+ Function: livesDisplay
+ Purpose: Draw and display images representing ships remaining.
+ Inputs: None.
+ Outputs: None.
+ */
+void livesDisplay() {
+  noFill();
+  stroke(255);
+  randomShape = createShape();
+  randomShape.beginShape();
+  randomShape.vertex(0, -25);//top
+  randomShape.vertex(-25, 25);//bottom left
+  randomShape.vertex(0, 25/2.0);//bottom middle
+  randomShape.vertex(25, 25);//bottom right
+  randomShape.endShape(CLOSE);
+  if (playerLives == 3) {
+    shape(randomShape, 50, 50);
+    shape(randomShape, 100, 50);
+    shape(randomShape, 150, 50);
+  } else if (playerLives == 2) {
+    shape(randomShape, 50, 50);
+    shape(randomShape, 100, 50);
+  } else if (playerLives == 1) {
+    shape(randomShape, 50, 50);
+  }
+}
+
+/*
+ Function: detectCollisions
+ Purpose: A function to check and handle collisions between the asteroids, projectiles and ships.
+ Inputs: None.
+ Outputs: None.
+ */
+void detectCollisions() {
+  // Check if the asteroids and alien ship have been destroyed.
+  if (killCount == numberAsteroids*7 && aliens == 0) {
+    levelUp();
+    nextLevel();
+    killCount = 0;
+  }
+  // Check if the alien ship exists check for a collision with the player ship.
+  if (aliens == 1) {
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
+      // Call function and perform actions to handle the collision event
+      handleAlienCollison();
+      return;
+    }
+  }
+  // Iterate through the asteroids arraylist to check for collisions.
+  for (int i = asteroids.size()-1; i >= 0; i--) {
+    Asteroid asteroid = asteroids.get(i);
+    //Call the circle collision detection function between the players ship and the current asteroid object.
+    if (circleCollision(ship.xPos, ship.yPos, ship.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
+      shipExplosion.trigger();
+      lifeEnd();
+      break;
+    }
+    //No collisions with the players ship or alien ship found, compare the projectiles to the asteroids and alien ship if it is visible.
+    for (int j=projectiles.size()-1; j >= 0; j--) {
+      Projectile bullet = projectiles.get(j);
+      // If the alien ship is displayed, check for a collision against a projectile.
+      if (aliens == 1){
+        if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
+          // Call function and perform actions to handle the collision event
+          handleAlienCollision(j);
+        }  
+      }
+      //Found a collision between the current asteroid and projectile.
+      if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, asteroid.location.x, asteroid.location.y, asteroid.aRadius())) {
+        // Call function and perform actions to handle the collision event
+        handleAsteroidCollision(asteroid, i, j);
+        //Split into new asteroids.
+        if (asteroid.hits() >0) {
+          splitAsteroid(asteroid);
+        }
+        break;
+      }
+    }
+  }
+}
+
+/*
+ Function: handleAlienCollison (Overloaded)
+ Purpose: Handles the collision events involving the alien ship.
+ Inputs: None / integer of the projectile position within the arrayList.
+ Outputs: None.
+ */
+void handleAlienCollison() {
+    shipExplosion.trigger();
+    lifeEnd();
+    alienShip.showAlien();
+}
+
+void handleAlienCollision(int projectileId){
+  alienShip.showAlien();
+  shipExplosion.trigger();
+  aScoreBoard.score += asteroidOnePoints;
+  aliens = 0;
+  projectiles.remove(projectileId);
+}
+
+/*
+ Function: circleCollision
+ Purpose: To detect collisions between asteroids & bullets, and asteroids and the player ship using circular based collision detection.
+ Inputs: Floats representing the x & y coordinates of two objects (x,yPos1 & x,yPos2) and the detection radius of each object(radOne, radTwo).
+ Outputs: Boolean true if a collision is detected, false if none was.
+ */
+boolean circleCollision(float xPos1, float yPos1, float radOne, float xPos2, float yPos2, float radTwo) {
+  //Is the centre of each object closer than their combined radii.
+  if (dist(xPos1, yPos1, xPos2, yPos2) < radOne + radTwo) {
+    return true;
+  }
+  return false;
+}
+
+/*
+ Function: handleAsteroidCollision
+ Purpose: A function to handle a collision between an asteroid and a projectile.
+ Inputs: The asteroid object, and two integers representing the position of the projectile and asteroid objects within their arraylists.
+ Outputs: None.
+ */
+void handleAsteroidCollision(Asteroid asteroid, int asteroidId, int projectileId) {
+
+  explosionSound.trigger();
+  aScoreBoard.update(asteroid.hitsLeft);
+  projectiles.remove(projectileId);
+  //Remove the life remaining of the asteroid
+  asteroid.hitsLeft();
+  //Keep track of how many asteroids have been destroyed.
+  killCount++;
+  asteroids.remove(asteroidId);
+}
+
+/*
+ Function: createAsteroid
+ Purpose: Creates a new asteroid object and adds it to the asteroid arraylist.
+ Inputs: An integer representing the life (number of hits) of the asteroid.
+ Outputs: None.
+ */
+void createAsteroid(int asteroidLife) {
+
+  PVector location = new PVector(random(random(0, 100)), random(width-100, width), random(height));
+  PVector velocity = new PVector(random(-2, 2), random(-2, 2));
+  int shape = chooseShape(shapeLength);
+  asteroids.add(new Asteroid(location, velocity, asteroidLife, shape));
+}
+
+/*
+ Function: splitAsteroid
+ Purpose: When an asteroid with 3 or 2 hits reamining is destroyed, this function splits the asteroid into two smaller ones 
+ with hits-1 remaining.
+ Inputs: The asteroid object which was hit by a projectile with more than 1 life remaining.
+ Outputs: None.
+ */
+void splitAsteroid(Asteroid asteroid ) {
+
+  asteroids.add(new Asteroid(new PVector(asteroid.location.x, asteroid.location.y), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
+    random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+  asteroids.add(new Asteroid(new PVector(asteroid.location.x, asteroid.location.y), (new PVector(random(-asteroidSpeed, asteroidSpeed), 
+    random(-asteroidSpeed, asteroidSpeed))), asteroid.hits(), chooseShape(shapeLength)));
+}
+
+/*
+ Function: mapEdgeWrap
+ Purpose: To detect if an object's PVector is leaving the screen bounds, and if so place them on the opposite side.
+ Inputs: A PVector representing the object's location, and a float of the objects radius.
+ Outputs: The original PVector if it is not leaving the screen, a modified PVector if it was leaving the screen.
+ */
+PVector mapEdgeWrap(PVector object, float radius) {
+  //Checking left,right,top,bottom boundaries in order.
+  if (object.x < -radius) {
+    object.x = width+radius;
+  } else if (object.x > width+radius) {
+    object.x = -radius;
+  }
+  if (object.y <= -radius) {
+    object.y = height+radius;
+  } else if (object.y > height+radius) {
+    object.y = -radius;
+  }
+  return object;
+}
+
+/*
+ Function: updateAndDrawProjectiles
+ Purpose: To remove projectiles if they have travelled their max distance, or move and display the projectiles.
+ Inputs: None.
+ Outputs: None.
+ */
+void updateAndDrawProjectiles() {
+
+  for (int i = projectiles.size()-1; i >= 0; i--) { 
+    Projectile bullet = projectiles.get(i);
+    PVector checkedLocation = mapEdgeWrap(bullet.blocation, bullet.radius);
+    bullet.blocation = checkedLocation;
+    if (bullet.distanceTravelled >= bulletMaxDistance) {
+      projectiles.remove(i);
+    } else {
+      bullet.move();
+      bullet.display();
+    }
+  }
+}
+
+/*
+ Function: displayHighScores
+ Purpose: Display new and overall highscore's.
+ Inputs: None.
+ Outputs: None.
+ */
+void displayHighScores() {
+  textSize(20);
+  fill(255);
+  textAlign(LEFT);
+  float columnOne = 0.25;
+  float columnTwo = 0.375;
+  float columnThree = 0.625;
+  int verticalSpacing = 20;
+  float textY =750;
+  if (kbNameEntry){
+    textAlign(CENTER);
+    String prompt = "New High Score! enter name:";
+    //float cursorPosition =textWidth(prompt+entry)+width/2;
+    float cursorX = width/2+(textWidth(prompt+entry)/2.0);
+    text(prompt+entry, width/2, textY);
+    line(cursorX,textY-textAscent(),cursorX,textY+textDescent());
+  }    
+  else{    
+    for (int i=0; i < highscores.length; i++) {
+      if (highscores[i] != 0) {
+        if (playerName[i] == ""){
+          playerName[i] = entry;
+        }        
+        text("Rank:"+(i+1), columnOne*width,(height/4)+(i*verticalSpacing));
+        text("Name:" +playerName[i], columnTwo*width, (height/4)+(i*verticalSpacing));
+        text("Score:" +highscores[i], columnThree*width, (height/4)+(i*verticalSpacing));
+      }    
+    }
+  } 
+}
+
+/*
+ Function: resetArrayLists
+ Purpose: Resets the arraylists.
+ Inputs: None.
+ Outputs: None.
+ */
+void resetArrayLists() {
+  projectiles.clear();
+  asteroids.clear();
+}
+
+/*
+ Function: readInScores
+ Purpose: Gets the current high scores from json file.
+ Inputs: None.
+ Outputs: None.
+ */
+void readInScores() {
+  File temp = new File(dataPath("highscores.json")); 
+  if (temp.exists()) {
+    values = loadJSONArray(temp);    
+    for (int i = 0; i < values.size(); i++) {
+      JSONObject entry = values.getJSONObject(i);
+      highscores[i] = entry.getInt("Highscore");
+      playerName[i] = entry.getString("Name");
+    }
+  }
+}
+
+/*
+ Function: shipStartSettings()
+ Purpose: Set's value of Ship object parameter's, called upon game start & restart following a game over.
+ Inputs: None.
+ Outputs: None.
+ */
+void shipStartSettings() {
+  shipFriction = 0.995;
+  shipThrustFact = 0.15;
+  shipMaxSpd = 10; 
+  shipSize = 15;
+  shipTurnArc =4;
+}
+
+/*
+ Function: drawShapes
+ Purpose: To fill an array with a series of randomly generates shapes that will be used for the asteroids.
+ Inputs: None.
+ Outputs: None.
+ */
+void drawShapes() {
+  for (int i = 0; i < shapes.length; i++) {
+    noFill();
+    stroke(255);
+    shapeMode(CENTER);
+    randomShape = createShape();
+    randomShape.beginShape();
+    randomShape.vertex(50, 50);
+    randomShape.vertex(random(40, 60), random(0, 20));
+    randomShape.vertex(random(80, 100), random(5, 25));
+    randomShape.vertex(random(70, 90), random(30, 40));
+    randomShape.vertex(random(90, 110), random(25, 45));
+    randomShape.vertex(random(70, 90), random(70, 90));
+    randomShape.vertex(random(50, 50), random(65, 75));
+    randomShape.vertex(random(15, 25), random(70, 90));
+    randomShape.vertex(random(20, 40), random(40, 60));
+    randomShape.vertex(random(0, 20), random(30, 40));
+    randomShape.vertex(random(15, 35), random(5, 25));
+    randomShape.endShape(CLOSE);
+    shapes[i] = randomShape;
+  }
+}
+
+
+
+/*
+ Function: chooseShape
+ Purpose: A utility function to provide a random number between 0 the int shapeLength which defines how many randomly
+ shaped asteroid types there are to draw.
+ Inputs: An integer configuration setting.
+ Outputs: An integer between 0 and shapeLength
+ */
+int chooseShape(int shapeLength) {
+
+  int number = int(random(0, shapeLength));
+  return number;
 }
 
 /*
@@ -1088,17 +1200,6 @@ void pauseScreen() {
 }
 
 /*
- Function: resetArrayLists
- Purpose: Resets the arraylists.
- Inputs: None.
- Outputs: None.
- */
-void resetArrayLists() {
-  projectiles.clear();
-  asteroids.clear();
-}
-
-/*
  Function: resetConditions
  Purpose: Resets all game parameters, preparing for a fresh new game.
  Inputs: None.
@@ -1120,34 +1221,6 @@ void resetConditions() {
   aliens = 1;
   projectiles = new ArrayList<Projectile>();
   background(0);
-}
-
-/*
- Function: livesDisplay
- Purpose: Draw and display images representing ships remaining.
- Inputs: None.
- Outputs: None.
- */
-void livesDisplay() {
-  noFill();
-  stroke(255);
-  randomShape = createShape();
-  randomShape.beginShape();
-  randomShape.vertex(0, -25);//top
-  randomShape.vertex(-25, 25);//bottom left
-  randomShape.vertex(0, 25/2.0);//bottom middle
-  randomShape.vertex(25, 25);//bottom right
-  randomShape.endShape(CLOSE);
-  if (playerLives == 3) {
-    shape(randomShape, 50, 50);
-    shape(randomShape, 100, 50);
-    shape(randomShape, 150, 50);
-  } else if (playerLives == 2) {
-    shape(randomShape, 50, 50);
-    shape(randomShape, 100, 50);
-  } else if (playerLives == 1) {
-    shape(randomShape, 50, 50);
-  }
 }
 
 /*
@@ -1189,44 +1262,6 @@ void updateScores(int score) {
 }
 
 /*
- Function: displayHighScores
- Purpose: Display new and overall highscore's.
- Inputs: None.
- Outputs: None.
- */
-void displayHighScores() {
-  textSize(20);
-  fill(255);
-  textAlign(LEFT);
-  float columnOne = 0.25;
-  float columnTwo = 0.375;
-  float columnThree = 0.625;
-  int verticalSpacing = 20;
-  float textY =750;
-  if (kbNameEntry){
-    textAlign(CENTER);
-    String prompt = "New High Score! enter name:";
-    //float cursorPosition =textWidth(prompt+entry)+width/2;
-    float cursorX = width/2+(textWidth(prompt+entry)/2.0);
-    text(prompt+entry, width/2, textY);
-    line(cursorX,textY-textAscent(),cursorX,textY+textDescent());
-  }    
-  else{    
-    for (int i=0; i < highscores.length; i++) {
-      if (highscores[i] != 0) {
-        if (playerName[i] == ""){
-          playerName[i] = entry;
-        }        
-        text("Rank:"+(i+1), columnOne*width,(height/4)+(i*verticalSpacing));
-        text("Name:" +playerName[i], columnTwo*width, (height/4)+(i*verticalSpacing));
-        text("Score:" +highscores[i], columnThree*width, (height/4)+(i*verticalSpacing));
-      }    
-    }
-  } 
-}
-
-
-/*
  Function: nameEntry
  Purpose: For each keypress, appends to entry.
  Inputs: None.
@@ -1241,24 +1276,6 @@ void nameEntry() {
     }
   } else if ((entry.length() < 10) && (key>31) && (key!=CODED)) {
       entry += key;
-  }
-}
-
-/*
- Function: readInScores
- Purpose: Gets the current high scores from json file.
- Inputs: None.
- Outputs: None.
- */
-void readInScores() {
-  File temp = new File(dataPath("highscores.json")); 
-  if (temp.exists()) {
-    values = loadJSONArray(temp);    
-    for (int i = 0; i < values.size(); i++) {
-      JSONObject entry = values.getJSONObject(i);
-      highscores[i] = entry.getInt("Highscore");
-      playerName[i] = entry.getString("Name");
-    }
   }
 }
 
