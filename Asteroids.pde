@@ -441,16 +441,9 @@ class Asteroid {
   void move() {
 
     location.add(velocity);    
-    if (location.x > width) {
-      location.x = 0;
-    } else if (location.x < 0) {
-      location.x = width;
-    }
-    if (location.y > height) {
-      location.y = 0;
-    } else if (location.y < 0) {
-      location.y = height;
-    }
+    // Boundary checking
+    PVector checkedLocation = mapEdgeWrap(location, radius);
+    location = checkedLocation;
   }
 
   /*
