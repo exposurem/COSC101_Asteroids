@@ -19,8 +19,11 @@
  * shipexplosion.wav - https://freesound.org/people/cabled_mess/sounds/350972/
  *
  * Code Snippet Credits:
- *
+ * Ship's PVectors/motion adapted/built upon from Daniel Shiffman's PVector tutorial.
+ * https://processing.org/tutorials/pvector/
+ * Highscore JSON feature based on file I/O from UNE's COSC101 lecture 12 - Working with Structured Data.
  */
+ 
  
 // Minim sound library. 
 import ddf.minim.*;
@@ -1291,7 +1294,7 @@ void updateScores(int score) {
  */
 void nameEntry() { 
   // Called for each keypress event, appends key to entry
-  if (key == ENTER|| key == RETURN && entry!="") {    
+  if (entry !="" && (key == ENTER || key == RETURN)) {    
     kbNameEntry = false;
   } else if (key == BACKSPACE && entry.length() > 0) {     
         entry = entry.substring(0, entry.length()-1);
@@ -1390,7 +1393,7 @@ void keyReleased() {
   if (key == 'a'||keyCode == LEFT) {
     sLEFT=false;
   }
-  if ((key == 'l' && gameScreen ==1)||(key == ' ' && gameScreen==1)) {
+  if (gameScreen == 1 && (key == 'l' || key == ' ')) {
     sSHOOT = true;
   }
 }
