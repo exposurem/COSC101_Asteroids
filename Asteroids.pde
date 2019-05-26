@@ -313,28 +313,22 @@ class Ship {
   }
  
   /*
-   Function: sameMoveAndDir()
-   Purpose: Checks if ship is moving forwards (relative to ship heading).
+   Function: momentumInHeading()
+   Purpose: Checks if ship momentum is moving forwards, relative to ship heading.
    Inputs: None
    Outputs: True or False boolean
    */  
-  boolean sameMoveAndDir(){
+  boolean momentumInHeading(){
     
-    if(heading < 0 && heading > -PI){
-      if(velocity.heading()>0 && velocity.heading() < PI){
-        return false;
-      }else{
-        return true;
-      }
+    float velFacingDiff = (abs(velocity.heading()-heading));
+    // Checks if velocity is within relative 180 degrees range (+90, -90) from heading.
+    if (velFacingDiff < HALF_PI && velFacingDiff > (-HALF_PI)){
+      return true;
     }else{
-      if(velocity.heading()>0 && velocity.heading() < PI){
-        return true;
-      }else{
-        return false; 
-      }      
-    }    
+      return false;
+    }
   }
-  
+   
   /*
    Function: shoot
    Purpose: Call shootSound.trigger() for sound, creates a projectile object.
@@ -344,11 +338,11 @@ class Ship {
   void shoot() {
     
     float bulletMag;
-    // Add ship's velocity mag to bullet if moving forwards (relative to ship's heading).
-    if(sameMoveAndDir() || sUP){
-      bulletMag = velocity.mag();  
+    // If ship's facing and momentum coincide, add ship's velocity to bullet.
+    if(momentumInHeading()){
+      bulletMag = velocity.mag(); 
     }
-    // if moving backwards (relative) add 0.
+    // if moving (relative) backwards set to 0.
     else{
       bulletMag=0;  
     }  
@@ -1301,7 +1295,7 @@ void nameEntry() {
     kbNameEntry = false;
   } else if (key == BACKSPACE && entry.length() > 0) {     
         entry = entry.substring(0, entry.length()-1);
-    // Ensure key entry is <=10, alphabetical characters.
+    // Ensure key entry is <=10, alphanumerical characters.
   } else if ((entry.length() < 10) && (key>31) && (key!=CODED)) {
       entry += key;
   }
