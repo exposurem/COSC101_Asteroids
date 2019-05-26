@@ -870,6 +870,7 @@ void detectCollisions() {
         if (circleCollision(bullet.blocation.x, bullet.blocation.y, bullet.radius, alienShip.location.x, alienShip.location.y, alienShip.aRadius())) {
           // Call function and perform actions to handle the collision event
           handleAlienCollision(j);
+          break;
         }  
       }
       //Found a collision between the current asteroid and projectile.
