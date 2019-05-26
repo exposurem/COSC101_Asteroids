@@ -1294,7 +1294,7 @@ void updateScores(int score) {
  */
 void nameEntry() { 
   // Called for each keypress event, appends key to entry
-  if (entry !="" && (key == ENTER || key == RETURN)) {    
+  if (key == ENTER || key == RETURN) {    
     kbNameEntry = false;
   } else if (key == BACKSPACE && entry.length() > 0) {     
         entry = entry.substring(0, entry.length()-1);
