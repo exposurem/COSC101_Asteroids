@@ -24,6 +24,7 @@
  * https://processing.org/tutorials/pvector/
  * Highscore JSON feature based on file I/O from UNE's COSC101 lecture 12 - Working with Structured Data.
  * https://discourse.processing.org/ for help with screen states.
+ * Circle collision detection adapted from https://happycoding.io/tutorials/processing/collision-detection#circle-circle-collision/.
  */
  
  
