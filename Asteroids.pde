@@ -12,16 +12,18 @@
  *               \Data\explosion.wav
  *               \Data\shipexplosion.wav
  *               \Data\shooting.wav.
+ *               The files may need to be manually added via the sketch/add file tab, depending on your system.
  *               Install the Minim sound library through processing.
  * Resource Credits:
  * explosion.wav - https://freesound.org/people/runningmind/sounds/387857/ 
  * shooting.wav - https://freesound.org/people/alphatrooper18/sounds/362420/
  * shipexplosion.wav - https://freesound.org/people/cabled_mess/sounds/350972/
  *
- * Code Snippet Credits:
+ * References:
  * Ship's PVectors/motion adapted/built upon from Daniel Shiffman's PVector tutorial.
  * https://processing.org/tutorials/pvector/
  * Highscore JSON feature based on file I/O from UNE's COSC101 lecture 12 - Working with Structured Data.
+ * https://discourse.processing.org/ for help with screen states.
  */
  
  
@@ -107,7 +109,7 @@ void setup() {
   //Load high scores
   readInScores();
   shipStartSettings();
-  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
+  alienShip = new Asteroid(new PVector(0, height/2), new PVector(1, 3));
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   aScoreBoard = new ScoreBoard(400, 20);
   soundOne = new Minim(this);
@@ -1159,7 +1161,7 @@ void nextLevel() {
     shipTurnArc+=0.2;
   }
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
-  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
+  alienShip = new Asteroid(new PVector(0, height/2), new PVector(1, 3));
   resetArrayLists();
   aliens = 1;
   timer = millis() + random(10000);
@@ -1234,7 +1236,7 @@ void resetConditions() {
   resetArrayLists();
   shipStartSettings();
   entry="";
-  alienShip = new Asteroid(new PVector(0, 400), new PVector(1, 3));
+  alienShip = new Asteroid(new PVector(0, height/2), new PVector(1, 3));
   ship = new Ship(shipFriction, shipThrustFact, shipMaxSpd, shipSize, shipMass, shipTurnArc);
   // Initialize the ArrayList.
   asteroids = new ArrayList<Asteroid>();
